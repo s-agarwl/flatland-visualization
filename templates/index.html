@@ -1,0 +1,992 @@
+<!DOCTYPE html> 
+<html>
+    <head>
+        <meta charset="utf-8">
+        <script  src="{{ url_for('static', filename='js/d3.v4.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/d3-selection-multi.v1.min.js') }}"></script>
+        <!-- <script src="js/svg-dropdown.js"></script> -->
+
+        <script src="{{ url_for('static', filename='js/visualizationScript.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/playback.js') }}"></script>
+
+        <script src="{{ url_for('static', filename='/data/data.js') }}"></script>
+        <script src="{{ url_for('static', filename='/js/svg-pan-zoom.min.js') }}"></script>
+        <!-- <script src="data/data_small.js"></script> -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='/css/all.min.css') }}">
+
+        <style>
+        .yLegend
+        {
+            fill:black;
+            text-anchor: end;
+            dominant-baseline: middle;
+        }
+        .heading{
+            text-align:left;
+            
+        }
+        .footer{
+            text-align:center;
+            background: #f1eeee;
+            /* padding:0px; */
+            margin:0px;
+
+        }
+        .header{
+            text-align:center;
+            margin-top: 0px;
+            background: #f1eeee;
+            margin-bottom:5px;
+        }
+        .divcenter{
+            text-align:center;
+
+        }
+        .info{
+            font-size: 14px;
+
+        }
+        .boldText{
+            font-weight: bold;
+            /* font-size: 12pt; */
+        }
+        .largeText{
+            font-size:14pt;
+        }
+        .result{
+            font-size:14pt;
+
+        }
+        .highlighted{
+            stroke:  #ffdd08;
+            
+            /* stroke:  black; */
+            stroke-width:2px;
+            /* stroke-opacity:0.3; */
+            
+        }
+        .nothighlighted{
+            stroke: white;
+            stroke-width:0px;
+        }
+        .gameLengthBar{
+            /* fill:"#0074D9"; */
+            /* fill:#329fec; */
+            fill: #9e9ac8;
+            /* fill:black; */
+            fill-opacity:1;
+            stroke:grey;
+            stroke-width:1px;
+            /* stroke-opacity: 0.6; */
+        }
+        
+
+
+        /* .video-js {
+            position: relative !important;
+            width: 100% !important;
+            height: auto !important;
+        } */
+        .footer {
+            position: relative;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 35px;
+            padding-top: 10px;
+            /* color: black;
+            vertical-align: middle;
+            line-height: 5px;
+            font-size: 08pt;
+            border-top: 1px solid #16ad1b;
+            background-color: white; */
+        }
+
+        .footer ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        .icon-flipped {
+            transform: scaleX(-1);
+            /* -moz-transform: scaleX(-1);
+            -webkit-transform: scaleX(-1);
+            -ms-transform: scaleX(-1); */
+        }
+        .firstLine{
+            font-size:12pt;
+        }
+        .secondLine{
+            font-size:10pt;
+        }
+        .abbr{
+            font-variant: small-caps;
+        }
+        .linkInTitle
+        {
+            color:black;
+            text-decoration: underline;
+        }
+
+        #playbackDiv.fullscreen{
+            z-index: 9999; 
+            width: 100%; 
+            height: 100%; 
+            position: fixed; 
+            padding-top:80px;
+            top:0;
+            left: 0; 
+            /* background-color:  rgba(201, 76, 76, 0.3); */
+            
+            
+        }
+        .sliderFullScreen{
+            width: 500px;
+            margin: auto;
+        }
+        .bodyFullScreen
+        {
+            opacity: 0.3;
+        }
+       
+        /* .btn{
+            padding: 0px 10px;
+            font-size: 12px;
+            line-height: 1.5;
+            border-radius: 3px;
+        } */
+
+
+        .agentIdText {
+            dominant-baseline: central;
+            /* dominant-baseline: text-before-edge; */
+            text-anchor: middle;
+        }
+        .overallStatistics{
+            font-weight: bold;
+        }
+        .frameStatistics{
+            font-weight: bold;
+        }
+
+        
+
+        </style>
+    <title>Flatland Visualization</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <script  src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script  src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-ui.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <!-- <script src="https://code.jquery.com/jquery-1.12.4.js"></script> -->
+  <script  src="{{ url_for('static', filename='js/jquery-ui.min.js') }}"></script>
+  <script  src="{{ url_for('static', filename='js/selection.js') }}"></script>
+
+  
+  <style>
+       .btn-default{
+            background-color: #d6d0d0;
+        }
+        .glyphicon-resize-small, .glyphicon-resize-full{
+            background-color: #d6d0d0;
+            padding: 3px;
+        }
+        .ui-widget-content
+        {
+            background: #d6d0d0;
+        }
+        .ui-widget-header
+        {
+            background: #9a0000;
+        }
+        .btn-sm{
+            padding:0px 6px 0px 6px;
+        }
+
+        .grid-container {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  grid-gap: 10px;
+  /* background-color: #2196F3; */
+  padding: 10px;
+  height: 100vh - 70px;
+  width: 100vw;
+}
+.item2{
+    grid-column-start: 2;
+  grid-column-end: 4;
+}
+
+.item4 {
+  grid-column-start: 1;
+  grid-column-end: 3;
+  grid-row-start: 2;
+  grid-row-end: 4;
+}
+
+/* .item5{
+    height:35vh;
+} */
+.item6{
+    height:55vh;
+}
+
+
+/* transition graph */
+.links line {
+  stroke: #999;
+  stroke-opacity: 0.6;
+}
+
+.nodes circle {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+  </style>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+
+
+    </head>
+    <body  >
+        
+        <div class="modal fade" id="myModal" role="dialog">
+            <div class="modal-dialog">
+            
+                <!-- Modal content-->
+                <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Select a metric:</h4>
+                </div>
+                <div class="modal-body">
+                    <div id="gameMetricRadio">
+                        <input type="radio" name="gameMetric" value="movement" checked> Distance travelled by all trains<br/>
+                        <input type="radio" name="gameMetric" value="startTimestep">  # Trains that started their journey<br/>
+                        <input type="radio" name="gameMetric" value="endTimestep">  # Trains that reached destination<br/>
+                        <input type="radio" name="gameMetric" value="malfunctions" >  # Trains experiencing malfunction<br/>
+                        <input type="radio" name="gameMetric" value="junctions" >  # Junctions witnessed by trains<br/>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal" id="modalOkButton">Ok</button>
+                </div>
+                </div>
+                
+            </div>
+        </div>
+
+        
+
+        <div class="header">
+            <!-- <span style="font-size:14pt;">Supplementary Material for</span><br /><br /> -->
+           
+            <div class="container-fluid">
+                    <div class="row">
+                            <div class="col-sm-2"  style="margin-top:10pt">                               
+                                    
+                            </div>
+                        
+                        <div class="col-sm-8" >
+                                    <span class="firstLine">Visualization for Analysis of <a href="https://flatland.aicrowd.com/intro.html" class="linkInTitle" target="_blank">Flatland</a> Episodes</span><br/>
+                                    
+
+                        </div>
+                        <div class="col-sm-2" style="margin-top:10pt">
+                                <a href="tutorial.html" target="_blank"  class="secondLine"><span class="glyphicon glyphicon-blackboard"></span> Help</a>
+                                <a href="contact.html" target="_blank"  class="secondLine" style="margin-left:15px;"><span class="glyphicon glyphicon-envelope"></span> Contact</a>
+                                
+                                
+                        </div>
+                    </div>
+                </div>
+        </div>
+        
+        <div class="grid-container">
+            <div class="item1">
+                <span> Select Episode: </span>
+                    <select id="datasetSelector" onchange="datasetChange()">
+                            
+                          </select> OR 
+                            <form id = "workingForm" action = "/success" method = "post" enctype="multipart/form-data" style = "display:inline-block;">  
+                                <input id="fileTag" type="file" name="files[]" multiple="true" autocomplete="off" required style = "display:inline-block;font-size:9pt;">
+                                <input type = "submit" value="Visualize" style = "display:inline-block;font-size:9pt;"> 
+                            </form>
+            </div>
+            <div class="item2">
+                <div id="OverallStats">
+                    <span class="overallStatistics">Percentage Done: </span><span id="percentDone" class="overallStatistics"></span> 
+                    <span> #Trains: </span><span id="totalNumTrains" class="overallStatistics"></span> 
+                    <span class="glyphicon glyphicon-ok"></span><span> #Trains <b>reached</b> destination: </span><span class="overallStatistics" id="totalNumTrainsReachedDestination"></span>
+                    <span class = "glyphicon glyphicon-road"></span><span> #Trains <b>on-track</b>: </span><span class="overallStatistics" id="totalNumTrainsInProgress"></span>
+                    <span class = "glyphicon glyphicon-pause"></span><span> #Trains <b>did not start</b>: </span><span class="overallStatistics" id="totalNumTrainsYetToRun"></span>
+                </div>
+            </div> 
+            <div class="item4">
+                <div  id="mainDiv" style="padding:5px;">
+                                
+                    <!-- <svg id="mainVisualization" viewBox="0 0 1920 1000" > -->
+                    <svg id="mainVisualization" style="margin-right:10px">
+                        <defs>
+                                <!-- arrowhead marker definition -->
+                                <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5"
+                                    markerWidth="6" markerHeight="6"
+                                    orient="auto-start-reverse">
+                                    <path d="M 0 0 L 10 5 L 0 10 z" />
+                                </marker>
+
+                                <filter x="0" y="0" width="1" height="1" id="solid">
+                                    <feFlood flood-color="white"/>
+                                    <feComposite in="SourceGraphic" operator="xor" operator="xor"/>
+                                  </filter>
+                        </defs>
+                        <g id="mainVisualizationGroup"></g>
+                    </svg>
+            </div>
+            </div>
+            <div class="item5">
+                <div id="transitionGraphDiv">
+                    
+                            
+                            <!-- <form id="postFilesForm" method="POST" enctype="multipart/form-data">
+                                <input type="file" name="file">
+                                <button type="submit" role="button">Upload File</button>
+                            </form> -->
+
+
+                            <!-- <div id="dropzone" style="margin:30px; width:500px; height:300px; border:1px dotted grey;">Drag & drop your file here...</div> -->
+                    
+
+                    <!-- <div id="summaryDiv"></div> -->
+            </div>
+            <div class="item6">
+                <div  id="playbackColumnDiv">
+                    <!-- <br/> -->
+                    <!-- <span style="font-weight: bold;">Current Frame</span> -->
+                    <span class="glyphicon glyphicon-ok"></span><span >  #Trains Reached Destination:</span><span class="currentNumTrainsReachedDestination" class="frameStatistics"></span>
+                    &nbsp;<span class = "glyphicon glyphicon-road"></span><span >  #Trains on Track:</span><span class="currentNumTrainsInProgress" class="frameStatistics"></span>
+                    &nbsp;<span class = "glyphicon glyphicon-pause"></span><span >  #Trains Waiting to Start:</span><span class="currentNumTrainsYetToStart" class="frameStatistics"></span>
+                    <div id="playbackDiv">
+                            
+                            
+                             <div style="margin-top:5px; text-align: center;">
+                                <label >Step: </label><label id="frame">0</label>
+                                
+                                <a href="#" class="btn btn-default btn-sm icon-flipped" id="previous">
+                                        <span class="glyphicon glyphicon-share-alt"></span>
+                                    </a>
+                                <a href="#" class="btn btn-default btn-sm" id="play" >
+                                    <span class="glyphicon glyphicon-play"></span>
+                                </a>
+                                <a href="#" class="btn btn-default btn-sm" id="pause" >
+                                    <span class="glyphicon glyphicon-pause"></span>
+                                </a>
+                                <a href="#" class="btn btn-default btn-sm" id="next" >
+                                    <span class="glyphicon glyphicon-share-alt"></span>
+                                </a>
+                                <select id="speed" onchange="speedChange()">
+                                    <option value="400" >0.25x</option>
+                                    <option value="300" >0.5x</option>
+                                    <option value="200" selected>1x</option>
+                                    <option value="100">2x</option>
+                                    
+                                  </select>
+                                <i class="glyphicon glyphicon-resize-full" id="resize" isFullScreen="false"></i>
+                                <input type="checkbox" id="heatmapCheckbox" name="heatmap">
+                                <label for="heatmapCheckbox"> Show Heatmap</label><br>
+                             </div>
+                             <!-- Slider -->
+                             <form id="reservation" >
+                            </form>
+                             <div id="video" class="divcenter"></div>
+
+                        </div>
+                </div>
+            </div>
+            
+            </div>
+
+          </div>
+        
+            <!-- <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm-4" id="playbackColumnDiv">
+
+                        <span class="glyphicon glyphicon-ok"></span><span >  #Trains Reached Destination:</span><span class="currentNumTrainsReachedDestination" class="frameStatistics"></span>
+                        &nbsp;<span class = "glyphicon glyphicon-road"></span><span >  #Trains on Track:</span><span class="currentNumTrainsInProgress" class="frameStatistics"></span>
+                        &nbsp;<span class = "glyphicon glyphicon-pause"></span><span >  #Trains Waiting to Start:</span><span class="currentNumTrainsYetToStart" class="frameStatistics"></span>
+                        <div id="playbackDiv">
+                                <div id="video" class="divcenter"></div>
+                                <form id="reservation" >
+                                    
+                            
+                                  </form>
+                                 <div style="margin-top:5px; text-align: center;">
+                                    <label >Step: </label><label id="frame">0</label>
+                                    
+                                    <a href="#" class="btn btn-default btn-sm icon-flipped" id="previous">
+                                            <span class="glyphicon glyphicon-share-alt"></span>
+                                        </a>
+                                    <a href="#" class="btn btn-default btn-sm" id="play" >
+                                        <span class="glyphicon glyphicon-play"></span>
+                                    </a>
+                                    <a href="#" class="btn btn-default btn-sm" id="pause" >
+                                        <span class="glyphicon glyphicon-pause"></span>
+                                    </a>
+                                    <a href="#" class="btn btn-default btn-sm" id="next" >
+                                        <span class="glyphicon glyphicon-share-alt"></span>
+                                    </a>
+                                    <select id="speed" onchange="speedChange()">
+                                        <option value="400" >0.25x</option>
+                                        <option value="300" >0.5x</option>
+                                        <option value="200" selected>1x</option>
+                                        <option value="100">2x</option>
+                                        
+                                      </select>
+                                    <i class="glyphicon glyphicon-resize-full" id="resize" isFullScreen="false"></i>
+                                    
+                                 </div>
+
+                            </div>
+                    </div>
+
+                    <div class="col-sm-8" id="overviewColumnDiv">
+                            <span> Select Episode: </span>
+                            <select id="datasetSelector" onchange="datasetChange()">
+                                    
+                                  </select> OR 
+                                    <form id = "workingForm" action = "/success" method = "post" enctype="multipart/form-data" style = "display:inline-block;">  
+                                        <input id="fileTag" type="file" name="files[]" multiple="true" autocomplete="off" required style = "display:inline-block;font-size:9pt;">
+                                        <input type = "submit" value="Visualize" style = "display:inline-block;font-size:9pt;"> 
+                                    </form>
+                                    
+                            <div id="OverallStats">
+                                <span class="overallStatistics">Percentage Done: </span><span id="percentDone" class="overallStatistics"></span> <br/>
+                                <span> #Trains: </span><span id="totalNumTrains" class="overallStatistics"></span> <br/>
+                                <span class="glyphicon glyphicon-ok"></span><span> #Trains <b>reached</b> destination: </span><span class="overallStatistics" id="totalNumTrainsReachedDestination"></span><br/>
+                                <span class = "glyphicon glyphicon-road"></span><span> #Trains <b>on-track</b>: </span><span class="overallStatistics" id="totalNumTrainsInProgress"></span><br/>
+                                <span class = "glyphicon glyphicon-pause"></span><span> #Trains <b>did not start</b>: </span><span class="overallStatistics" id="totalNumTrainsYetToRun"></span>
+                            </div>
+
+                            <div id="summaryDiv"></div>
+                    </div>
+                    
+                    
+                </div>
+                    <div class="row " height = "870px">
+                        <div class= "col-sm-12 " id="mainDiv" style="padding:5px;">
+                                
+                               
+                                <svg id="mainVisualization" style="margin-right:10px">
+                                    <defs>
+                                           
+                                            <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5"
+                                                markerWidth="6" markerHeight="6"
+                                                orient="auto-start-reverse">
+                                                <path d="M 0 0 L 10 5 L 0 10 z" />
+                                            </marker>
+
+                                            <filter x="0" y="0" width="1" height="1" id="solid">
+                                                <feFlood flood-color="white"/>
+                                                <feComposite in="SourceGraphic" operator="xor" operator="xor"/>
+                                              </filter>
+                                    </defs>
+                                    <g id="mainVisualizationGroup"></g>
+                                </svg>
+                        </div>
+                        
+                    </div>
+
+            </div> -->
+        <div >
+            
+        </div>
+
+        <div class="footer" style="float:left;">
+
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-sm-2">
+                                <a href="https://www.uni-due.de/de/impressum.shtml" target="_blank" class="secondLine">Imprint</a>
+                                <a href="https://www.uni-due.de/de/datenschutz.php" target="_blank" style="margin-left:16px;" class="secondLine">Data Privacy</a>
+                                
+                        </div>
+                        <!-- <div class="col-sm-2">
+                                <a href="https://www.uni-due.de/de/datenschutz.php">Data Privacy</a>
+                                
+                        </div> -->
+                        <div class="col-sm-8" >
+                                Best viewed in Google Chrome at 1920 x 1200 resolution
+                        </div>
+                    </div>
+                </div>
+    
+        </div>
+    </body>
+
+
+    <script>
+
+
+window.addEventListener( "load", function () {
+  function sendData() {
+    const XHR = new XMLHttpRequest();
+
+    // Bind the FormData object and the form element
+    const FD = new FormData( form );
+
+    // Define what happens on successful data submission
+    XHR.addEventListener( "load", function(event) {
+    //   alert( event.target.responseText );
+    //   console.log( event.target.responseText);
+      window.isDataLoadedByUser = true;
+      initialize(true, event.target.responseText);
+    } );
+
+    // Define what happens in case of error
+    XHR.addEventListener( "error", function( event ) {
+      alert( 'Oops! Something went wrong.' );
+    } );
+
+    // Set up our request
+    XHR.open( "POST", "/success" );
+
+    // The data sent is what the user provided in the form
+    XHR.send( FD );
+  }
+ 
+  // Access the form element...
+  const form = document.getElementById( "workingForm" );
+
+  // ...and take over its submit event.
+  form.addEventListener( "submit", function ( event ) {
+    event.preventDefault();
+
+    sendData();
+  } );
+} );
+
+        window.showHeatmap = false;
+        window.currentVerticalPosition = 0;
+        // window.figureForTeaser = true;
+        window.figureForTeaser = false;
+        window.highlightEvents = {"movement": true, "startTrain": true, "endTrain": true, "junction": false, "malfunction": true, "deadlock": true};
+
+        window.maxGameLength = 802;
+        window.timeWait = 200;
+        window.metric_labelDictionary = {
+            "movement": "Distance Travelled",
+            "startTimestep": "# Trains Started",
+            "endTimestep": "# Trains Ended",
+            "junctions": "# Junctions",
+            "malfunctions": "# Malfunctions"
+
+        }
+        window.selectedMetric = "movement";
+
+        window.agentIndex_RowidDictionary = {
+                0: "e1",
+                1: "e3",
+                2: "e2",
+                3: "e4"
+            };
+        window.Rowid_agentIndexDictionary = {
+                "e1": 0,
+                "e3": 1,
+            "e2" : 2,
+            "e4":3
+            };
+        window.isDataLoadedByUser = false;
+
+        
+        // Check for the various File API support.
+        if (window.File && window.FileReader && window.FileList && window.Blob) {
+        // Great success! All the File APIs are supported.
+        } else {
+        alert('The File APIs are not fully supported in this browser.');
+        }
+
+        d3.select("#resize").on("click", function(){
+            var isFullScreen = d3.select("#resize").attr("isfullscreen");
+            var isplaying = window.playClicked;
+
+            if(window.playClicked == true)
+            {
+                clearInterval(window.intervalId);
+                d3.select("#status").interrupt();
+                window.playClicked = false;
+                
+            }
+            $('#playbackDiv').toggleClass('fullscreen');
+            $('#slider').toggleClass('sliderFullScreen');
+            $('#overviewColumnDiv').toggleClass('bodyFullScreen');
+            $('#mainDiv').toggleClass('bodyFullScreen');
+
+            if(isFullScreen == "false")
+            {
+               
+                window.svgWidthHeight = 800;
+                isFullScreen = "true";
+                d3.select("#resize").attr("class", "glyphicon glyphicon-resize-small");
+                d3.select("#playbackDiv").attr("opacity",1);
+                
+            }
+            else
+            {
+                isFullScreen = "false";
+                window.svgWidthHeight = 600;
+                d3.select("#resize").attr("class", "glyphicon glyphicon-resize-full");
+
+            }
+            d3.select("#resize").attr("isfullscreen", isFullScreen);
+            d3.select("#videoSVG").attr("width", window.svgWidthHeight).attr("height", window.svgWidthHeight);
+
+
+            i = $( "#slider" ).slider("value");
+            var video = d3.select("#videoSVG");
+            renderNextFrame(window.data[window.selectedEpisodeKey], i, video);
+
+            if(isplaying)
+            {
+                
+                window.intervalId = setInterval(function()
+                    {
+                        renderNextFrame(window.pommermanData["blob"]["state"], i, video);
+                        i++; 
+                    }, window.timeWait);
+
+                    var sbar = d3.select("#status");
+                    var t = d3.select('#status').node().transform.baseVal[0].matrix;
+                    var currentX = t["e"];
+                    var totalDuration = window.selectedEpisodeLength * window.timeWait;
+                    var visEndX = globalXScale(window.selectedEpisodeLength) ;
+                    var visStartX = globalXScale(0);
+                    var alpha = ((visEndX - visStartX)/totalDuration);
+                    var dur = (currentX - visStartX)/alpha;
+                    d3.select("#status").attr("transform","translate("+currentX+",0)" )
+                    .transition().duration((totalDuration - dur))
+                    .ease(d3.easeLinear)
+                    .attr("transform","translate("+(visEndX)+",0)" );
+                    window.playClicked = true;
+            }
+
+        });
+        function speedChange()
+        {
+            var e = document.getElementById("speed");
+            window.timeWait = parseInt(e.options[e.selectedIndex].value);
+            var isplaying = window.playClicked;
+
+            if(window.playClicked == true)
+            {
+                clearInterval(window.intervalId);
+                d3.select("#status").interrupt();
+                window.playClicked = false;
+                
+            }
+            if(isplaying)
+            {
+                i = $( "#slider" ).slider("value");
+                var video = d3.select("#videoSVG");
+                window.intervalId = setInterval(function()
+                    {
+                        renderNextFrame(window.data[window.selectedEpisodeKey], i, video);
+                        i++; 
+                    }, window.timeWait);
+
+                    var sbar = d3.select("#status");
+                    var t = d3.select('#status').node().transform.baseVal[0].matrix;
+                    var currentX = t["e"];
+                    var totalDuration = window.selectedEpisodeLength * window.timeWait;
+                    var visEndX = globalXScale(window.selectedEpisodeLength) ;
+                    var visStartX = globalXScale(0);
+                    var alpha = ((visEndX - visStartX)/totalDuration);
+                    var dur = (currentX - visStartX)/alpha;
+                    d3.select("#status").attr("transform","translate("+currentX+",0)" )
+                    .transition().duration((totalDuration - dur))
+                    .ease(d3.easeLinear)
+                    .attr("transform","translate("+(visEndX)+",0)" );
+                    window.playClicked = true;
+            }
+
+
+
+        }
+        function datasetChange()
+        {
+            var e = document.getElementById("datasetSelector");
+            var episodeKey = e.options[e.selectedIndex].value;
+            if(window.selectedEpisodeKey != episodeKey)
+                loadSpecificGame(episodeKey);
+            // $("body").css("cursor", "progress");
+            
+        }
+
+        window.fileNamesArray=[];
+        
+        function drawOverviewMetric(svg, xscale2, yscale2, overviewStatsPerGame, isTeamGame, metricName, heightOfCell)
+            {
+                d3.select("#metricGroup").selectAll("*").remove();
+                var metricGroup =  d3.select("#metricGroup");
+
+                window.selectedMetric = metricName;
+                d3.selectAll(".selectedMetric").text(window.metric_labelDictionary[window.selectedMetric]);
+
+                var dataArray=[];
+                var min = 99999999, max = -1;
+                for(var i=0; i< overviewStatsPerGame.length; i++)
+                {
+                    var temp = [];
+                   
+                    
+                    if(isTeam)
+                    {
+                        temp.push(overviewStatsPerGame[i]["e1"][metricName] + overviewStatsPerGame[i]["e2"][metricName]);
+                        temp.push(overviewStatsPerGame[i]["e3"][metricName] + overviewStatsPerGame[i]["e4"][metricName]);
+                    }
+                    else
+                    {
+                        temp.push(overviewStatsPerGame[i]["e1"][metricName]);
+                        temp.push(overviewStatsPerGame[i]["e2"][metricName]);
+                        temp.push(overviewStatsPerGame[i]["e3"][metricName]);
+                        temp.push(overviewStatsPerGame[i]["e4"][metricName]);
+                    }
+                    var tempMin = d3.min(temp);
+                    var tempMax = d3.max(temp);
+
+                    if(tempMin < min) min = tempMin;
+                    if(tempMax > max) max = tempMax;
+                    dataArray.push(temp);
+                }
+            
+                var barHeightScale = d3.scaleLinear().domain([0, max]).range([0, heightOfCell - 4]);
+                for(var i=0; i< dataArray.length; i++)
+                {
+                    var svgGroup = metricGroup.append("g").attrs({
+                        "gameIndex": i,
+                        "cursor": "pointer"
+                    });
+
+                    for(var j=0; j< dataArray[i].length; j++)
+                    {
+                        var reductionInBarWidth = 5;
+
+                         // border of bars
+                         svgGroup.append("rect").attrs({
+                            "x": xscale2(i) + reductionInBarWidth,
+                            "y": yscale2(j+"-"),
+                            "height":heightOfCell,
+                            "width": heightOfCell - 2*reductionInBarWidth,
+                            "fill": "white",
+                            "stroke": "black",
+                            "stroke-width":"2px"
+                        });
+                        
+                        svgGroup.append("rect").attrs({
+                            "x": xscale2(i) + reductionInBarWidth + 1,
+                            "y": yscale2(j+"-") + heightOfCell - barHeightScale(dataArray[i][j]) - 1,
+                            "width":heightOfCell - 2*reductionInBarWidth - 2,
+                            "height": barHeightScale(dataArray[i][j]),
+                            "fill": _param.histogramBarColor,
+                            "stroke": _param.histogramBarColor
+                        }).append("title").text(dataArray[i][j]);
+                        // metricGroup.append("rect").attrs({
+                        //     "x": xscale2(i) + 1,
+                        //     "y": yscale2(j+"-"),
+                        //     "height":heightOfCell,
+                        //     "width": barHeightScale(dataArray[i][j]) - 2,
+                        //     "fill": "grey"
+                        // });
+
+                       
+                        svgGroup.on("click", function(){
+                            var gameIndex = d3.select(this).attr("gameIndex");
+                            loadGame(gameIndex);
+                        })
+                        svgGroup.on("mousemove", function(){
+                            var gameIndex = d3.select(this).attr("gameIndex");
+                            d3.select("#highlightRectid"+gameIndex).classed("highlighted", true).classed("nothighlighted", false);
+                        });
+                        svgGroup.on("mouseout", function(){
+                            var gameIndex = d3.select(this).attr("gameIndex");
+                            if(d3.select("#highlightRectid"+gameIndex).attr("selected") == "false")
+                                d3.select("#highlightRectid"+gameIndex).classed("highlighted", false).classed("nothighlighted", true);
+                        });
+                    }
+                }
+            }
+
+        function loadGame(gameIndex)
+        {
+            d3.selectAll(".highlightRect").classed("highlighted", false).classed("nothighlighted", true);
+            d3.selectAll(".highlightRect").attr("selected", "false");
+            // var gameIndex = d3.select(this).attr("gameIndex");
+            // d3.select(this).select(".highlightRect").classed("highlighted", true).classed("nothighlighted", false);
+            d3.select("#highlightRectid"+gameIndex).classed("highlighted", true).classed("nothighlighted", false);
+            
+            clearInterval(window.intervalId);
+            d3.select("#status").interrupt();
+            window.playClicked = false;
+
+            loadSpecificGame(gameIndex);
+            window.selectedGame = gameIndex;
+            d3.select("#highlightRectid"+gameIndex).attr("selected", true);
+        }
+        $(window).resize(function() {
+            // console.log('window was resized' + document.body.clientWidth + " x "+document.body.clientHeight);
+            var screenWidth = document.body.clientWidth;
+            window.zoomFactor = screenWidth/1940;
+            d3.select("#mainDiv").style("zoom", zoomFactor);
+            d3.select("#summaryDiv").style("zoom", zoomFactor);
+        });
+       
+
+        
+        function initialize(uploadedLogs, logData)
+        {
+            var dropdown = d3.select("#datasetSelector");
+            window.selectedEpisodeKey = -1;
+
+            if(uploadedLogs == true)
+            {
+                window.jsonLogData = JSON.parse(JSON.parse(logData));
+                window.testLevels = jsonLogData['testLevels'];
+                $("#datasetSelector").empty();
+                window.selectedEpisodeKey = -1;
+            }
+            else
+            {
+                window.testLevels.sort(function(a,b){
+                    atechParts = a.split("-");
+                    btechParts = b.split("-");
+                    if(atechParts[0] == btechParts[0])
+                    {
+                        aParts = a.split("_");
+                        bParts = b.split("_");
+                        aInt = parseInt(aParts[1]+aParts[3]);
+                        bInt = parseInt(bParts[1]+bParts[3]);
+                        return aInt-bInt;
+                    }
+                    else
+                    {
+                        if(atechParts[0] == "RL")
+                            return -1;
+                        else
+                            return 1
+                    }
+                })
+                window.selectedEpisodeKey = "RL-Test_11_Level_1";
+            }
+
+            
+            for(var episodekey in window.testLevels)
+            {
+                if(window.selectedEpisodeKey == -1)
+                {
+                    window.selectedEpisodeKey = window.testLevels[episodekey];
+                    dropdown.append("option").attr("selected", "").attr("value", window.testLevels[episodekey]).text(window.testLevels[episodekey]);
+                }
+                else if(window.selectedEpisodeKey === window.testLevels[episodekey])
+                    dropdown.append("option").attr("selected", "").attr("value", window.testLevels[episodekey]).text(window.testLevels[episodekey]);
+                else
+                    dropdown.append("option").attr("value", window.testLevels[episodekey]).text(window.testLevels[episodekey]);
+
+            }
+            
+            loadSpecificGame(window.selectedEpisodeKey)
+        }
+
+
+        window.onload = function() 
+        {
+
+
+            var screenWidth = document.body.clientWidth;
+            window.zoomFactor = screenWidth/1950;
+            d3.select("#mainDiv").style("zoom", window.zoomFactor);
+            // d3.select("#summaryDiv").style("zoom", window.zoomFactor);
+            // var playbackHeight = d3.select("#overviewColumnDiv").node().getBoundingClientRect().height *window.zoomFactor;
+
+            d3.select("#modalOkButton").on("click", function(){
+                var radios = document.querySelectorAll('input[name=gameMetric]:checked');
+                var value = radios.length>0? radios[0].value: null;
+                window.selectedMetric = value;
+                var team1Data = computeHistogramData(_param.agentTimelineData, value, 10);
+                var root1 = d3.select("#histogram");
+                drawEventHistogram(value, "trains", 10, team1Data, 1, root1);
+
+            });
+
+            d3.select("#playbackColumnDiv").style("zoom", window.zoomFactor);
+            // d3.select("#playbackColumnDiv").attr("height", playbackHeight);
+
+            var select = $( "#reservation" );
+            var slider = $( "<div id='slider'></div>" ).insertAfter( select ).slider({
+            min: 1,
+            max: 6,
+            range: "min",
+            value: select[ 0 ].selectedIndex + 1,
+            slide: function( event, ui ) {
+                    select[ 0 ].selectedIndex = ui.value - 1;
+                }
+            });
+            $( "#minbeds" ).on( "change", function() {
+            slider.slider( "value", this.selectedIndex + 1 );
+            });
+
+            // drawVisualization(window.selectedEpisodeKey);
+
+            // preprocessData();
+
+            initialize();
+
+            d3.select("#heatmapCheckbox").on("click", function(){
+                if(document.getElementById("heatmapCheckbox").checked)
+                {    d3.select("#heatMap").attr("display", "visible");
+                    window.showHeatmap = true;
+                }
+                else
+                {
+                    d3.select("#heatMap").attr("display", "none");
+                    window.showHeatmap = false;
+                }
+
+            })
+
+
+        };
+
+        function loadSpecificGame(episodekey)
+        {
+            // window.pommermanData = {"blob": window.gamesDataArray[gameIndex]};
+            // drawVisualization();
+            window.selectedEpisodeKey = episodekey;
+            if(window.isDataLoadedByUser == false)
+            {
+                filename = "/static/data/levelsData/"+episodekey+".json"
+            
+                d3.json(filename, function(jsonData){
+                    window.data = jsonData;
+                    window.selectedEpisodeLength = window.data['environmentData']['episode'].length;
+                    drawVisualization();
+                });
+            }
+            else
+            {
+                window.data = window.jsonLogData[window.selectedEpisodeKey];
+                window.selectedEpisodeLength = window.data['environmentData']['episode'].length;
+                drawVisualization();
+            }
+            
+        }
+
+        
+        
+        // preparePlayback();
+    </script>
+
+</html>
