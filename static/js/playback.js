@@ -2,6 +2,8 @@ function preparePlayback()
 {
     d3.select("#video").selectAll("*").remove();
 
+
+
     var gameData = window.data['environmentData'];
     var numRows = gameData["grid"].length;
     var numColumns = gameData["grid"][0].length;
@@ -14,7 +16,8 @@ function preparePlayback()
 
     var playbackDiv = d3.select("#playbackDiv");
     window.svgWidthHeight = 400;
-    var video = d3.select("#video").append("svg").attr("id", "videoSVG").attr("width", "100%").attr("height",svgWidthHeight).append("g").attr("id","playbackSvgGroup");
+    var divwidth = playbackDiv.node().getBoundingClientRect().width;
+    var video = d3.select("#video").append("svg").attr("id", "videoSVG").attr("width", divwidth).attr("height",svgWidthHeight).append("g").attr("id","playbackSvgGroup");
     var i=0;
     renderFirstFrame(gameData, i, video, numRows, numColumns, episodeLength);
     
@@ -95,7 +98,26 @@ function preparePlayback()
     var svgElement = document.querySelector('#videoSVG')
     var panZoomTiger = svgPanZoom(svgElement, {controlIconsEnabled: true});
 
+
 }
+
+function viewBox(svg) {
+    var box = svg.getAttribute('viewBox');
+    return {x: parseInt(box.split(' ')[0], 10), y: parseInt(box.split(' ')[1], 10), width: parseInt(box.split(' ')[2], 10), height: parseInt(box.split(' ')[3], 10)};
+};
+function zoom(svg, initialBox, factor) {
+    svg.setAttribute('viewBox', initialBox.x + ' ' + initialBox.y + ' ' + initialBox.width / factor + ' ' + initialBox.height / factor);
+  }
+   
+  function zoomFactor(svg) {
+    var height = parseInt(svg.getAttribute('height').substring(0, svg.getAttribute('height').length - 2), 10);
+    return 1.0 * viewBox(svg).height / height;
+  }
+  function pan(svg, panX, panY) {
+    var pos = viewBox(svg);
+    var factor = zoomFactor(svg);
+    svg.setAttribute('viewBox', (pos.x - factor * panX) + ' ' + (pos.y - factor * panY) + ' ' + pos.width + ' ' + pos.height);
+  }
 
 function renderFirstFrame(gameData, i, video, numRows, numColumns, episodeLength)
 {
@@ -241,7 +263,7 @@ function renderFirstFrame(gameData, i, video, numRows, numColumns, episodeLength
     {
         video.append("image").attrs({
             "xlink:href":function(){
-                    return "static/resources/png/Bahnhof_d50000.png";
+                    return "./static/resources/png/Bahnhof_d50000.png";
             },
             "width": window.svgWidthHeight/numColumns,
             "height": window.svgWidthHeight/numRows,
@@ -256,7 +278,7 @@ function renderFirstFrame(gameData, i, video, numRows, numColumns, episodeLength
     // lasso.items(circles);
     // video.call(lasso);
     enableSelectioninplaybackSVG();
-
+    computeOccupyingCellsByRegions(d3.select("#transitionGraphSvg"));
 
 }
 
@@ -265,7 +287,7 @@ function posToSetElementString(pos)
     return '['+pos[0]+','+pos[1]+']';
 }
 
-function computeOccupyingCellsByRegions()
+function computeOccupyingCellsByRegions(svgRoot)
 {
     var rectArray = _param.selectionRectanglesArray;
 
@@ -405,16 +427,18 @@ function computeOccupyingCellsByRegions()
     }
 
     _param.graph = {"nodes": nodes, "links": aggregatedEdges};
-    drawTransitionGraph();
+    drawTransitionGraph(svgRoot);
 
 }
 
-function drawTransitionGraph()
+function drawTransitionGraph(svgRoot)
 {
     var height = window.svgWidthHeight;
-    var width = height;
-    d3.select("#transitionGraphSvg").remove();
-    var svg = d3.select("#transitionGraphDiv").append("svg").attr("id", "transitionGraphSvg").attr("width", width).attr("height",window.svgWidthHeight);
+    var width = d3.select("#transitionGraphDiv").node().getBoundingClientRect().width;
+    // d3.select("#transitionGraphSvg g").remove();
+    svgRoot.selectAll("*").remove();
+    var svgRoot = d3.select("#transitionGraphSvg").attr("width", width).attr("height",window.svgWidthHeight);
+    var svg =svgRoot;
 
     // svg.append("defs").append("marker").attrs({
     //     "id": "head",
@@ -465,7 +489,7 @@ function drawTransitionGraph()
     }
 
     var nodeSizeScale = d3.scaleLinear().domain([1, maxNodeWeight]).range([3, 15]);
-    var edgeThicknessScale = d3.scaleLinear().domain([ 1, maxEdgeValue]).range([2,5]);
+    var edgeThicknessScale = d3.scaleLinear().domain([ 1, maxEdgeValue]).range([3,8]);
 
     var color = d3.scaleOrdinal(d3.schemeCategory20);
 
@@ -480,9 +504,9 @@ function drawTransitionGraph()
 // var repelForce = d3.forceManyBody().strength(-140).distanceMax(200).distanceMin(100);
 
     var simulation = d3.forceSimulation()
-        .force("link", d3.forceLink().id(function(d) { return d.id; }).distance(200))
-        .force("charge", d3.forceManyBody().strength(-100))
-        .force('collide', d3.forceCollide().radius(function(d){ return nodeSizeScale(d.numTrains) }).strength(-5))
+        .force("link", d3.forceLink().id(function(d) { return d.id; }).distance(180))
+        .force("charge", d3.forceManyBody().strength(-200))
+        .force('collide', d3.forceCollide().radius(function(d){ return nodeSizeScale(d.numTrains) }).strength(-50))
         // .force("attractForce",attractForce).force("repelForce",repelForce)
         .force("center", d3.forceCenter(width / 2, height / 2));
 
@@ -513,17 +537,30 @@ function drawTransitionGraph()
     
   var circles = node.append("circle")
       .attr("r", function(d){ 
- 
-            d.radius = nodeSizeScale(d.numTrains);
-
-
-        return nodeSizeScale(d.numTrains); })
-      
+          var r =1;
+            if(d.numTrains != 0)
+                {
+                    r = nodeSizeScale(d.numTrains);
+                }
+                d.radius = r;
+                return r;
+            })
       .attr("fill", function(d) { return "grey"; })
       .call(d3.drag()
           .on("start", dragstarted)
           .on("drag", dragged)
           .on("end", dragended));
+    circles.on("mouseover", function(d, i){
+        console.log(d,i);
+        for(var trainid in d.trains)
+        {
+            d3.select("#highlighter"+trainid).attr("opacity", _param.highlightOpacity);
+        }
+
+    }).on("mouseout", function(d){
+        d3.selectAll(".highlighters").attr("opacity", 0);
+
+    })
 
   var lables = node.append("text")
       .text(function(d) {
@@ -714,7 +751,7 @@ function drawPerFrameStatistics(frame_num)
 
 function returnAgentImagePath(agentIndex)
 {
-    var imagePath = "static/resources/png/";
+    var imagePath = "./static/resources/png/";
     // switch(agentIndex)
     // {
         // case 0: 
@@ -726,7 +763,7 @@ function returnAgentImagePath(agentIndex)
 
 function returnImagePath(cellValue)
 {
-    var imagePath = "static/resources/png/";
+    var imagePath = "./static/resources/png/";
     switch(cellValue)
     {
         case 0:

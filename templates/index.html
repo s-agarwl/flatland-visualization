@@ -15,6 +15,10 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='/css/all.min.css') }}">
 
         <style>
+
+        #videoSVG{
+            cursor:crosshair;
+        }
         .yLegend
         {
             fill:black;
@@ -297,8 +301,8 @@
 
                         </div>
                         <div class="col-sm-2" style="margin-top:10pt">
-                                <a href="tutorial.html" target="_blank"  class="secondLine"><span class="glyphicon glyphicon-blackboard"></span> Help</a>
-                                <a href="contact.html" target="_blank"  class="secondLine" style="margin-left:15px;"><span class="glyphicon glyphicon-envelope"></span> Contact</a>
+                                <!-- <a href="tutorial.html" target="_blank"  class="secondLine"><span class="glyphicon glyphicon-blackboard"></span> Help</a>
+                                <a href="contact.html" target="_blank"  class="secondLine" style="margin-left:15px;"><span class="glyphicon glyphicon-envelope"></span> Contact</a> -->
                                 
                                 
                         </div>
@@ -311,11 +315,12 @@
                 <span> Select Episode: </span>
                     <select id="datasetSelector" onchange="datasetChange()">
                             
-                          </select> OR 
+                          </select> 
+                          <!-- OR 
                             <form id = "workingForm" action = "/success" method = "post" enctype="multipart/form-data" style = "display:inline-block;">  
                                 <input id="fileTag" type="file" name="files[]" multiple="true" autocomplete="off" required style = "display:inline-block;font-size:9pt;">
                                 <input type = "submit" value="Visualize" style = "display:inline-block;font-size:9pt;"> 
-                            </form>
+                            </form> -->
             </div>
             <div class="item2">
                 <div id="OverallStats">
@@ -367,9 +372,9 @@
                 <div  id="playbackColumnDiv">
                     <!-- <br/> -->
                     <!-- <span style="font-weight: bold;">Current Frame</span> -->
-                    <span class="glyphicon glyphicon-ok"></span><span >  #Trains Reached Destination:</span><span class="currentNumTrainsReachedDestination" class="frameStatistics"></span>
+                    <!-- <span class="glyphicon glyphicon-ok"></span><span >  #Trains Reached Destination:</span><span class="currentNumTrainsReachedDestination" class="frameStatistics"></span>
                     &nbsp;<span class = "glyphicon glyphicon-road"></span><span >  #Trains on Track:</span><span class="currentNumTrainsInProgress" class="frameStatistics"></span>
-                    &nbsp;<span class = "glyphicon glyphicon-pause"></span><span >  #Trains Waiting to Start:</span><span class="currentNumTrainsYetToStart" class="frameStatistics"></span>
+                    &nbsp;<span class = "glyphicon glyphicon-pause"></span><span >  #Trains Waiting to Start:</span><span class="currentNumTrainsYetToStart" class="frameStatistics"></span> -->
                     <div id="playbackDiv">
                             
                             
@@ -402,7 +407,7 @@
                              <!-- Slider -->
                              <form id="reservation" >
                             </form>
-                             <div id="video" class="divcenter"></div>
+                             <div id="video" ></div>
 
                         </div>
                 </div>
@@ -563,14 +568,17 @@ window.addEventListener( "load", function () {
   const form = document.getElementById( "workingForm" );
 
   // ...and take over its submit event.
-  form.addEventListener( "submit", function ( event ) {
-    event.preventDefault();
+  if(form !=undefined)
+  {
+      form.addEventListener( "submit", function ( event ) {
+        event.preventDefault();
 
-    sendData();
-  } );
+        sendData();
+    } );
+    }
 } );
 
-        window.showHeatmap = false;
+        window.showHeatmap = true;
         window.currentVerticalPosition = 0;
         // window.figureForTeaser = true;
         window.figureForTeaser = false;
@@ -967,7 +975,7 @@ window.addEventListener( "load", function () {
             window.selectedEpisodeKey = episodekey;
             if(window.isDataLoadedByUser == false)
             {
-                filename = "/static/data/levelsData/"+episodekey+".json"
+                filename = "./static/data/levelsData/"+episodekey+".json"
             
                 d3.json(filename, function(jsonData){
                     window.data = jsonData;

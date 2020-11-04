@@ -15,7 +15,7 @@ _param = {
     topPadding : 60,
     bottomPadding : 20,
     svgWidth : 1200,
-    svgHeight : 770,
+    svgHeight : 920,
     height : 600,
     textEnd : 150,
     marginTextBeforeMatrix: 30,
@@ -41,6 +41,7 @@ _param = {
     deadlockShapeStrokeWidth: "2px",
     nodeColor: "grey",
     linkColor: "grey",
+    highlightOpacity: 0.2
     
 };
 
@@ -1739,7 +1740,8 @@ function drawVisualization()
     window.overallStatisticsDict = computeOverallStatistics(agentTimelineData);
     window.perFrameStatisticsArray = computePerFrameStatistics(agentTimelineData);
     
-    d3.select("transitionGraphSvg").remove();
+    d3.select("#transitionGraphSvg").remove();
+
     drawOverallStatistics(overallStatisticsDict);
     var episodeData = window.data['environmentData'];
     // var episodeLength = episodeData.max_episode_steps;
@@ -1787,8 +1789,11 @@ function drawVisualization()
     var radiusOfCircle = _param.radiusOfCircle;
     var glyphOPacity = _param.glyphOPacity;
     var marginTextBeforeMatrix = _param.marginTextBeforeMatrix;
-
-    d3.select("#mainVisualization").attr("width", width).attr("height", svgHeight);
+    var boundingRect = d3.select("#mainDiv").node().getBoundingClientRect();
+    // console.log(boundingRect);
+    width = boundingRect.width;
+    _param.svgWidth = width;
+    d3.select("#mainVisualization").attr("width",  width+ "px").attr("height", height + "px");
     var svg = d3.select("#mainVisualizationGroup");
     var topLegendGroup = d3.select("#mainVisualization").append("g").attr("id", "topLegend");
     
@@ -1989,7 +1994,7 @@ function drawVisualization()
             "stroke-width": "1px",
             "stroke-opacity": 0,
             "class": "highlighters",
-            "id": "highligher"+entitiesArray[i],
+            "id": "highlighter"+entitiesArray[i],
             "pointer-events":"all"
             // "visibility":"hidden",
             // "cursor": "pointer"
@@ -2139,7 +2144,7 @@ function drawVisualization()
 
     highlighters.selectAll(".highlighters").on("mouseover", function(d, i){
         // d3.select(this).attr("stroke-opacity", 1);
-        d3.select(this).attr("opacity", 0.2);
+        d3.select(this).attr("opacity", _param.highlightOpacity);
         var agent_index = _param.entitiesArray[i];
         d3.select("#TrainLabel"+agent_index).attr("font-weight", "bold");
 
@@ -2469,6 +2474,9 @@ function drawVisualization()
     statusBar.call(drag);
 
     statusBar.attr("transform", "translate("+ xscale(0) +",0)");
+    var height = window.svgWidthHeight;
+    var width = d3.select("#transitionGraphDiv").node().getBoundingClientRect().width;
+    d3.select("#transitionGraphDiv").append("svg").attr("id", "transitionGraphSvg").attr("width", width).attr("height",window.svgWidthHeight);
     drawHeatmap();
 
 }
