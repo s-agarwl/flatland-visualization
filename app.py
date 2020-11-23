@@ -28,8 +28,15 @@ def allowed_file(filename):
 
 @app.route('/')
 def hello():
-    message = "Hello World!"
-    return render_template('index.html', message=message)
+    return render_template('index.html')
+
+@app.route('/help')
+def help():
+    return render_template('tutorial.html')
+
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')
 
 @app.route('/success', methods = ['GET','POST'])  
 def success():  

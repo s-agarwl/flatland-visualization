@@ -358,7 +358,7 @@ def processData(folder, dataPaths):
         fileSize = os.path.getsize(env_file)
         print(env_file)
         #print(fileSize)
-        if fileSize < (5 * 1024*1024):
+        if fileSize < (20 * 1024*1024):
             print("filesize test passed")
             env, env_dict = RailEnvPersister.load_new(env_file)
             env.reset(random_seed=1001)

@@ -2,18 +2,26 @@
 <html>
     <head>
         <meta charset="utf-8">
+        <title>Flatland Visualization</title>
         <script  src="{{ url_for('static', filename='js/d3.v4.min.js') }}"></script>
         <script src="{{ url_for('static', filename='js/d3-selection-multi.v1.min.js') }}"></script>
         <!-- <script src="js/svg-dropdown.js"></script> -->
-
         <script src="{{ url_for('static', filename='js/visualizationScript.js') }}"></script>
         <script src="{{ url_for('static', filename='js/playback.js') }}"></script>
 
         <script src="{{ url_for('static', filename='/data/data.js') }}"></script>
         <script src="{{ url_for('static', filename='/js/svg-pan-zoom.min.js') }}"></script>
-        <!-- <script src="data/data_small.js"></script> -->
+        <!-- <script src="{{ url_for('static', filename='/js/svg-pan-zoom.js') }}"></script> -->
         <link rel="stylesheet" href="{{ url_for('static', filename='/css/all.min.css') }}">
-
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+        <script  src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+        <script  src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-ui.css') }}">
+      <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+      <!-- <script src="https://code.jquery.com/jquery-1.12.4.js"></script> -->
+      <script  src="{{ url_for('static', filename='js/jquery-ui.min.js') }}"></script>
+      <script  src="{{ url_for('static', filename='js/selection.js') }}"></script>
         <style>
 
         #videoSVG{
@@ -84,13 +92,6 @@
             /* stroke-opacity: 0.6; */
         }
         
-
-
-        /* .video-js {
-            position: relative !important;
-            width: 100% !important;
-            height: auto !important;
-        } */
         .footer {
             position: relative;
             left: 0;
@@ -98,12 +99,6 @@
             width: 100%;
             height: 35px;
             padding-top: 10px;
-            /* color: black;
-            vertical-align: middle;
-            line-height: 5px;
-            font-size: 08pt;
-            border-top: 1px solid #16ad1b;
-            background-color: white; */
         }
 
         .footer ul {
@@ -114,9 +109,6 @@
         }
         .icon-flipped {
             transform: scaleX(-1);
-            /* -moz-transform: scaleX(-1);
-            -webkit-transform: scaleX(-1);
-            -ms-transform: scaleX(-1); */
         }
         .firstLine{
             font-size:12pt;
@@ -141,9 +133,6 @@
             padding-top:80px;
             top:0;
             left: 0; 
-            /* background-color:  rgba(201, 76, 76, 0.3); */
-            
-            
         }
         .sliderFullScreen{
             width: 500px;
@@ -153,40 +142,34 @@
         {
             opacity: 0.3;
         }
-       
-        /* .btn{
-            padding: 0px 10px;
-            font-size: 12px;
-            line-height: 1.5;
-            border-radius: 3px;
-        } */
-
-
+    
         .agentIdText {
             dominant-baseline: central;
-            /* dominant-baseline: text-before-edge; */
             text-anchor: middle;
         }
         .overallStatistics{
             font-weight: bold;
         }
+        .statsItem{
+            padding-left:20px;
+        }
         .frameStatistics{
             font-weight: bold;
         }
-
-        
-
+        .solidBorder{
+            border: 1px solid black;
+        }
+        .viewTitle {
+            display: inline;
+            background-color: grey;
+            color: white;
+            padding: 2px 20px 3px 20px;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            font-weight: bold;
+        }
         </style>
-    <title>Flatland Visualization</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-    <script  src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-    <script  src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-ui.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <!-- <script src="https://code.jquery.com/jquery-1.12.4.js"></script> -->
-  <script  src="{{ url_for('static', filename='js/jquery-ui.min.js') }}"></script>
-  <script  src="{{ url_for('static', filename='js/selection.js') }}"></script>
 
   
   <style>
@@ -201,41 +184,55 @@
         {
             background: #d6d0d0;
         }
-        .ui-widget-header
-        {
-            background: #9a0000;
+       
+        .ui-widget-header {
+            background: #0000ff;
         }
         .btn-sm{
             padding:0px 6px 0px 6px;
         }
 
         .grid-container {
-  display: grid;
-  grid-template-columns: auto auto auto;
-  grid-gap: 10px;
-  /* background-color: #2196F3; */
-  padding: 10px;
-  height: 100vh - 70px;
-  width: 100vw;
-}
-.item2{
-    grid-column-start: 2;
-  grid-column-end: 4;
-}
+            display: grid;
+            grid-template-columns: auto auto (30%);
+            grid-template-rows: 50px 20px auto auto 30px;
+            grid-gap: 5px;
+            height: 100vh - 30px;
+            width: 100%;
+            }
 
-.item4 {
-  grid-column-start: 1;
-  grid-column-end: 3;
-  grid-row-start: 2;
-  grid-row-end: 4;
-}
+        .item0{
+                grid-column-start: 1;
+            grid-column-end: 4;
 
-/* .item5{
-    height:35vh;
-} */
-.item6{
-    height:55vh;
-}
+        }
+        .item1{
+            margin-left: 10px;
+        }
+            .item2{
+                grid-column-start: 2;
+            grid-column-end: 4;
+            }
+
+            .item4 {
+            grid-column-start: 1;
+            grid-column-end: 3;
+            grid-row-start: 3;
+            grid-row-end: 5;
+            width: 900px;
+            margin-left:10px;
+            }
+
+            .item5{
+                grid-row-start: 3;
+            grid-row-end: 5;
+            margin-right: 15px;
+            }
+            .item6{
+                grid-column-start: 1;
+            grid-column-end: 4;
+
+            }
 
 
 /* transition graph */
@@ -245,15 +242,53 @@
 }
 
 .nodes circle {
-  stroke: #fff;
-  stroke-width: 1.5px;
+  /* stroke: #fff; */
+  stroke-width: 1px;
+  cursor:pointer;
+}
+.stationLabel:hover{
+    font-weight: bold;
+}
+.histogramHoverBars:hover{
+    fill:"grey";
+    fill-opacity: 0.2;
+}
+#slider{
+    margin-left: 10px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+label{
+    font-weight:normal;
+}
+.btn-info{
+    font-size:14px;
+    background-color: white;
+    border-color:black;
+    cursor:pointer;
+    width: 40px;
+    height:40px;
+    padding: 0px;
+    padding-top: 5px;
+}
+.btn-info:hover .btn-info:focus .btn-info:active{
+    border-color:black;
+}
+.graphLinks:hover{
+    stroke:black;
+}
+.dynamicLinks:hover{
+    stroke:black;
+}
+.ui-slider .ui-slider-handle{
+    cursor:pointer;
 }
 
   </style>
 
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
-
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
 
     </head>
     <body  >
@@ -286,31 +321,37 @@
 
         
 
-        <div class="header">
-            <!-- <span style="font-size:14pt;">Supplementary Material for</span><br /><br /> -->
-           
-            <div class="container-fluid">
-                    <div class="row">
-                            <div class="col-sm-2"  style="margin-top:10pt">                               
-                                    
-                            </div>
-                        
-                        <div class="col-sm-8" >
-                                    <span class="firstLine">Visualization for Analysis of <a href="https://flatland.aicrowd.com/intro.html" class="linkInTitle" target="_blank">Flatland</a> Episodes</span><br/>
-                                    
 
-                        </div>
-                        <div class="col-sm-2" style="margin-top:10pt">
-                                <!-- <a href="tutorial.html" target="_blank"  class="secondLine"><span class="glyphicon glyphicon-blackboard"></span> Help</a>
-                                <a href="contact.html" target="_blank"  class="secondLine" style="margin-left:15px;"><span class="glyphicon glyphicon-envelope"></span> Contact</a> -->
-                                
-                                
-                        </div>
-                    </div>
-                </div>
-        </div>
         
-        <div class="grid-container">
+        <div class="grid-container" id="page">
+            <div class = "item0">
+                <div class="header">
+                    <!-- <span style="font-size:14pt;">Supplementary Material for</span><br /><br /> -->
+                   
+                    <div class="container-fluid">
+                            <div class="row">
+                                    <div class="col-sm-2" class="secondLine" style="margin-top:0pt">                               
+                                        
+                                        
+                                        <a href="https://github.com/shivamworking/flatland-visualization" target="_blank" style="float:left;"><i class="fa fa-github" style="font-size:28px; color: black;"></i></a>
+                                    </div>
+                                
+                                <div class="col-sm-8" >
+                                    
+                                            <span class="firstLine">Adventures in <a href="https://flatland.aicrowd.com/intro.html" class="linkInTitle" target="_blank">Flatland</a> : Visual Analysis of Constrained Multi-agent Rail Movement</span><br/>
+                                    <span class="secondLine">(Please fill <b><a href="https://docs.google.com/forms/d/e/1FAIpQLSfandmyOnIcyClKPgSHHTzZGdhNWrKkBd0uQ95JijeF8P-9pw/viewform" target="_blank" >the feedback form</a></b> to help us in research and suggest further improvements.)</span>
+
+                                </div>
+                                <div class="col-sm-2" style="margin-top:4pt">
+                                        <a href="/help" target="_blank"  class="secondLine"><span class="glyphicon glyphicon-blackboard"></span> Help</a>
+                                        <a href="/contact" target="_blank"  class="secondLine" style="margin-left:15px;"><span class="glyphicon glyphicon-envelope"></span> Contact</a>
+                                        
+                                        
+                                </div>
+                            </div>
+                        </div>
+                </div>
+            </div>
             <div class="item1">
                 <span> Select Episode: </span>
                     <select id="datasetSelector" onchange="datasetChange()">
@@ -324,15 +365,17 @@
             </div>
             <div class="item2">
                 <div id="OverallStats">
-                    <span class="overallStatistics">Percentage Done: </span><span id="percentDone" class="overallStatistics"></span> 
-                    <span> #Trains: </span><span id="totalNumTrains" class="overallStatistics"></span> 
-                    <span class="glyphicon glyphicon-ok"></span><span> #Trains <b>reached</b> destination: </span><span class="overallStatistics" id="totalNumTrainsReachedDestination"></span>
-                    <span class = "glyphicon glyphicon-road"></span><span> #Trains <b>on-track</b>: </span><span class="overallStatistics" id="totalNumTrainsInProgress"></span>
-                    <span class = "glyphicon glyphicon-pause"></span><span> #Trains <b>did not start</b>: </span><span class="overallStatistics" id="totalNumTrainsYetToRun"></span>
+                    <span >Percentage Done: </span><span id="percentDone" class="overallStatistics"></span> 
+                    <span class = "statsItem"> #Trains: </span><span id="totalNumTrains" class="overallStatistics"></span> 
+                    <span class = "statsItem"> #Trains <b>reached</b> destination (<span class="glyphicon glyphicon-ok "></span>): </span><span class="overallStatistics" id="totalNumTrainsReachedDestination"></span>
+                    <span class = "statsItem"> #Trains <b>on-track </b>(<span class = "glyphicon glyphicon-road"></span>): </span><span class="overallStatistics" id="totalNumTrainsInProgress"></span>
+                    <span class = "statsItem"> #Trains <b>did not start</b> (<span class = "glyphicon glyphicon-pause"></span>): </span><span class="overallStatistics" id="totalNumTrainsYetToRun"></span>
                 </div>
             </div> 
-            <div class="item4">
-                <div  id="mainDiv" style="padding:5px;">
+            <div class="item4" id="item4">
+                <div class="viewTitle">Timeline View</div>
+
+                <div  id="mainDiv" class="solidBorder" style="padding:5px;">
                                 
                     <!-- <svg id="mainVisualization" viewBox="0 0 1920 1000" > -->
                     <svg id="mainVisualization" style="margin-right:10px">
@@ -353,67 +396,121 @@
                     </svg>
             </div>
             </div>
-            <div class="item5">
-                <div id="transitionGraphDiv">
-                    
-                            
-                            <!-- <form id="postFilesForm" method="POST" enctype="multipart/form-data">
-                                <input type="file" name="file">
-                                <button type="submit" role="button">Upload File</button>
-                            </form> -->
+            <div class="item5" id="rightColumn">
+                <!-- <div class="viewTitle">Playback Controls</div> -->
+                
+                
 
-
-                            <!-- <div id="dropzone" style="margin:30px; width:500px; height:300px; border:1px dotted grey;">Drag & drop your file here...</div> -->
-                    
-
-                    <!-- <div id="summaryDiv"></div> -->
-            </div>
-            <div class="item6">
-                <div  id="playbackColumnDiv">
+                <div class="viewTitle">Map View</div>
+                <div  id="playbackColumnDiv"  style = "margin-bottom:0px">
                     <!-- <br/> -->
                     <!-- <span style="font-weight: bold;">Current Frame</span> -->
                     <!-- <span class="glyphicon glyphicon-ok"></span><span >  #Trains Reached Destination:</span><span class="currentNumTrainsReachedDestination" class="frameStatistics"></span>
                     &nbsp;<span class = "glyphicon glyphicon-road"></span><span >  #Trains on Track:</span><span class="currentNumTrainsInProgress" class="frameStatistics"></span>
                     &nbsp;<span class = "glyphicon glyphicon-pause"></span><span >  #Trains Waiting to Start:</span><span class="currentNumTrainsYetToStart" class="frameStatistics"></span> -->
-                    <div id="playbackDiv">
-                            
-                            
-                             <div style="margin-top:5px; text-align: center;">
-                                <label >Step: </label><label id="frame">0</label>
-                                
-                                <a href="#" class="btn btn-default btn-sm icon-flipped" id="previous">
-                                        <span class="glyphicon glyphicon-share-alt"></span>
-                                    </a>
-                                <a href="#" class="btn btn-default btn-sm" id="play" >
-                                    <span class="glyphicon glyphicon-play"></span>
-                                </a>
-                                <a href="#" class="btn btn-default btn-sm" id="pause" >
-                                    <span class="glyphicon glyphicon-pause"></span>
-                                </a>
-                                <a href="#" class="btn btn-default btn-sm" id="next" >
-                                    <span class="glyphicon glyphicon-share-alt"></span>
-                                </a>
-                                <select id="speed" onchange="speedChange()">
-                                    <option value="400" >0.25x</option>
-                                    <option value="300" >0.5x</option>
-                                    <option value="200" selected>1x</option>
-                                    <option value="100">2x</option>
-                                    
-                                  </select>
-                                <i class="glyphicon glyphicon-resize-full" id="resize" isFullScreen="false"></i>
-                                <input type="checkbox" id="heatmapCheckbox" name="heatmap">
-                                <label for="heatmapCheckbox"> Show Heatmap</label><br>
-                             </div>
-                             <!-- Slider -->
-                             <form id="reservation" >
-                            </form>
-                             <div id="video" ></div>
-
+                    <div id="playbackDiv" class="solidBorder">
+                        <div style="position:absolute;">
+                            <!-- <i class="glyphicon glyphicon-resize-full" id="resize" isFullScreen="false"></i> -->
+                            <input type="checkbox" id="heatmapCheckbox" name="heatmap" style="margin-left:10px;">
+                            <label for="heatmapCheckbox"> Occupancy Time</label>
                         </div>
+                        <a href="#" id="rectangleRegionSelectionButton" class="btn btn-info btn-lg" style="margin-top:50px; position:absolute;color:black; background-color: lightgrey;"
+                        title = "Rectangular Selection of Regions">
+                        <svg  width="30px" height="30px" viewBox="0 0 16 16" class="bi bi-bounding-box-circles" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" d="M2 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM0 2a2 2 0 0 1 3.937-.5h8.126A2 2 0 1 1 14.5 3.937v8.126a2 2 0 1 1-2.437 2.437H3.937A2 2 0 1 1 1.5 12.063V3.937A2 2 0 0 1 0 2zm2.5 1.937v8.126c.703.18 1.256.734 1.437 1.437h8.126a2.004 2.004 0 0 1 1.437-1.437V3.937A2.004 2.004 0 0 1 12.063 2.5H3.937A2.004 2.004 0 0 1 2.5 3.937zM14 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM2 13a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm12 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+                          </svg>
+                        </a>
+                          <a href="#" class="btn btn-info btn-lg" id="railRegionSelectionButton"  style="margin-top:100px; position:absolute;  background-color: white;"
+                          title = "Select Rail Line as a Region">
+                            <svg  width="30px" height="30px" >
+                                <image xlink:href="./static/resources/png/Gleis_horizontal.png" width="40px" height="30px" x="-5px" y="0" ></image>
+                            </svg>
+                            </a>
+                          <a href="#" id="cancelSelectionButton" class="btn btn-info btn-lg" style="margin-top:150px; position:absolute;color:red; font-size:30px; font-weight:normal; background-color: white;"
+                          title="Delete Selected Regions">
+                          <span class="glyphicon "  >&#xe014;</span>
+                        </a>
+                          <!-- <svg id="cancelSelectionButton"  width="30px" height="30px" style="margin-top:100px; position:absolute;">
+                            <image xlink:href="./static/resources/png/Gleis_horizontal.png" width="30px" height="30px" x="0" y="0" ></image>
+                          </svg> -->
+
+                        <div id="video" ></div>
+                             
+                             
+                             
+
+                            <!-- <br /> -->
+                        </div>
+                </div>
+                <div style="margin-top:5px; text-align: center;">
+                    <label >Step: </label><label id="frame">0</label>
+                    
+                    <a href="#" class="btn btn-default btn-sm icon-flipped" id="previous">
+                            <span class="glyphicon glyphicon-share-alt"></span>
+                        </a>
+                    <a href="#" class="btn btn-default btn-sm" id="play" >
+                        <span class="glyphicon glyphicon-play"></span>
+                    </a>
+                    <a href="#" class="btn btn-default btn-sm" id="pause" >
+                        <span class="glyphicon glyphicon-pause"></span>
+                    </a>
+                    <a href="#" class="btn btn-default btn-sm" id="next" >
+                        <span class="glyphicon glyphicon-share-alt"></span>
+                    </a>
+                    <select id="speed" onchange="speedChange()">
+                        <option value="400" >0.25x</option>
+                        <option value="300" >0.5x</option>
+                        <option value="200" selected>1x</option>
+                        <option value="100">2x</option>
+                        
+                      </select>
+                    
+                     <!-- Slider -->
+                    <form id="reservation" >
+                    </form>
+                 </div>
+                
+                <div class="viewTitle ">Graph View</div>
+                <div id="transitionGraphDiv" class = "solidBorder">
+                    <form style="margin-left:10px;">
+                        <label>Show: </label><input style="margin-left:10px;" type="radio" id="aggregatedRadio" name="graphsRadio" value="aggregatedRadio" checked="checked" onclick="handleRadioClick(this);">
+                        <label for="aggregatedRadio">Aggregated Graph</label>
+                        <input type="radio" id="dynamicRadio" name="graphsRadio" value="dynamicRadio" onclick="handleRadioClick(this);">
+                        <label for="dynamicRadio">Animated Graph</label>
+                    </form>   
+                    <!-- <label id="graphText">The graph shows selected regions as node and movement as edges. Select a region from the map ...</label>     -->
+                            <!-- <form id="postFilesForm" method="POST" enctype="multipart/form-data">
+                                <input type="file" name="file">
+                                <button type="submit" role="button">Upload File</button>
+                            </form> -->
+                </div>
+            </div>
+            
+            <div class="item6">
+                <div class="footer" style="float:left;">
+
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-sm-2">
+                                    <a href="https://www.uni-due.de/de/impressum.shtml" target="_blank" class="secondLine">Imprint</a>
+                                    <a href="https://www.uni-due.de/de/datenschutz.php" target="_blank" style="margin-left:16px;" class="secondLine">Data Privacy</a>
+                                    
+                            </div>
+                            <!-- <div class="col-sm-2">
+                                    <a href="https://www.uni-due.de/de/datenschutz.php">Data Privacy</a>
+                                    
+                            </div> -->
+                            <div class="col-sm-8" >
+                                    Best viewed in Google Chrome at 1920 x 1200 resolution
+                            </div>
+                        </div>
+                    </div>
+        
                 </div>
             </div>
             
             </div>
+
 
           </div>
         
@@ -511,31 +608,66 @@
             
         </div>
 
-        <div class="footer" style="float:left;">
-
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class="col-sm-2">
-                                <a href="https://www.uni-due.de/de/impressum.shtml" target="_blank" class="secondLine">Imprint</a>
-                                <a href="https://www.uni-due.de/de/datenschutz.php" target="_blank" style="margin-left:16px;" class="secondLine">Data Privacy</a>
-                                
-                        </div>
-                        <!-- <div class="col-sm-2">
-                                <a href="https://www.uni-due.de/de/datenschutz.php">Data Privacy</a>
-                                
-                        </div> -->
-                        <div class="col-sm-8" >
-                                Best viewed in Google Chrome at 1920 x 1200 resolution
-                        </div>
-                    </div>
-                </div>
-    
-        </div>
+        
     </body>
 
 
     <script>
+        window.selectedRegions = [];
+        window.selectedRegionIdCounter = 1;
 
+        window.areaSelection = "rect"; //rail
+        d3.select("#rectangleRegionSelectionButton").on("click", function(){
+            d3.select("#rectangleRegionSelectionButton").style("background-color", "lightgrey");
+            d3.select("#railRegionSelectionButton").style("background-color", "white");
+            d3.select("#railRegionGroup g").attr("pointer-events", "none");
+            d3.select("#heatMap").attr("pointer-events", "all");
+            d3.select("#videoSVG").style("cursor", "crosshair");
+            window.areaSelection = "rect";
+        })
+        d3.select("#railRegionSelectionButton").on("click", function(){
+            d3.select("#rectangleRegionSelectionButton").style("background-color", "white");
+            d3.select("#railRegionSelectionButton").style("background-color", "lightgrey");
+            d3.select("#railRegionGroup g").attr("pointer-events", "all");
+            d3.select("#heatMap").attr("pointer-events", "none");
+            d3.select("#videoSVG").style("cursor", "default");
+            window.areaSelection = "rail";
+        })
+        d3.select("#cancelSelectionButton").on("click", function(){
+            for (var i = 0; i < _param.selectionRectanglesArray.length; i++)
+                _param.selectionRectanglesArray[i].remove();
+            _param.selectionRectanglesArray = [];
+            _param.selectedRailRegionIds = {};
+            d3.selectAll(".railRegions").attr("visibility", "hidden");
+            // _param.graph={};
+            d3.selectAll(".regionIdText").remove();
+
+            d3.select("#transitionGraphSvg").selectAll("*").remove();
+            window.selectedRegions = [];
+            window.selectedRegionIdCounter = 1;
+            computeOccupyingCellsByRegions(d3.select("#transitionGraphSvg"));
+            //   d3.select("#dynamicGraphGroup").remove();
+            appendSampleGraphText();
+        })
+
+
+function handleRadioClick(radio)
+{
+    var value = radio.value;
+    if(value === "aggregatedRadio")
+    {
+        d3.select("#dynamicGraphGroup").attr("visibility","hidden");
+        d3.selectAll(".movingTrains").attr("visibility","hidden");
+        d3.selectAll(".dynamicLinks").attr("visibility","hidden");
+        d3.select("#aggregatedGraphGroup").attr("visibility","visible");
+    }
+    else if(value === "dynamicRadio")
+    {
+        d3.select("#aggregatedGraphGroup").attr("visibility","hidden");
+        d3.select("#dynamicGraphGroup").attr("visibility","visible");
+        computeGraphForEachTimestep();
+    }
+}
 
 window.addEventListener( "load", function () {
   function sendData() {
@@ -726,6 +858,13 @@ window.addEventListener( "load", function () {
         }
         function datasetChange()
         {
+            d3.select('body').style("cursor", "wait");
+            _param.graph = {"nodes": {}, "links":[]};
+            window.selectedRegions = [];
+            window.selectedRegionIdCounter = 1;
+            d3.select("#transitionGraphSvg").selectAll("*").remove();
+            appendSampleGraphText();
+
             var e = document.getElementById("datasetSelector");
             var episodeKey = e.options[e.selectedIndex].value;
             if(window.selectedEpisodeKey != episodeKey)
@@ -846,10 +985,14 @@ window.addEventListener( "load", function () {
         }
         $(window).resize(function() {
             // console.log('window was resized' + document.body.clientWidth + " x "+document.body.clientHeight);
+            // window.item4Width = undefined;
             var screenWidth = document.body.clientWidth;
             window.zoomFactor = screenWidth/1940;
-            d3.select("#mainDiv").style("zoom", zoomFactor);
-            d3.select("#summaryDiv").style("zoom", zoomFactor);
+            d3.select("#page").style("zoom", window.zoomFactor);
+            // d3.select("#mainDiv").style("zoom", zoomFactor);
+            // d3.select("#rightColumn").style("zoom", zoomFactor);
+            // d3.select("#playbackColumnDiv").style("zoom", zoomFactor);
+            // d3.select("#summaryDiv").style("zoom", zoomFactor);
         });
        
 
@@ -887,7 +1030,7 @@ window.addEventListener( "load", function () {
                             return 1
                     }
                 })
-                window.selectedEpisodeKey = "RL-Test_11_Level_1";
+                window.selectedEpisodeKey = "RL-Test_11_Level_0";
             }
 
             
@@ -914,8 +1057,11 @@ window.addEventListener( "load", function () {
 
 
             var screenWidth = document.body.clientWidth;
-            window.zoomFactor = screenWidth/1950;
-            d3.select("#mainDiv").style("zoom", window.zoomFactor);
+            window.zoomFactor = screenWidth/1940;
+            d3.select("#page").style("zoom", window.zoomFactor);
+            // window.item4Width = d3.select("#item4").node().getBoundingClientRect().width;
+            // d3.select("#mainDiv").style("zoom", window.zoomFactor);
+            // d3.select("#rightColumn").style("zoom", window.zoomFactor);
             // d3.select("#summaryDiv").style("zoom", window.zoomFactor);
             // var playbackHeight = d3.select("#overviewColumnDiv").node().getBoundingClientRect().height *window.zoomFactor;
 
@@ -929,7 +1075,7 @@ window.addEventListener( "load", function () {
 
             });
 
-            d3.select("#playbackColumnDiv").style("zoom", window.zoomFactor);
+            // d3.select("#playbackColumnDiv").style("zoom", window.zoomFactor);
             // d3.select("#playbackColumnDiv").attr("height", playbackHeight);
 
             var select = $( "#reservation" );
@@ -973,6 +1119,10 @@ window.addEventListener( "load", function () {
             // window.pommermanData = {"blob": window.gamesDataArray[gameIndex]};
             // drawVisualization();
             window.selectedEpisodeKey = episodekey;
+            // if(window.item4Width != undefined)
+            // {
+            //     d3.select("#item4").attr("width", window.item4Width);
+            // }
             if(window.isDataLoadedByUser == false)
             {
                 filename = "./static/data/levelsData/"+episodekey+".json"
@@ -981,6 +1131,7 @@ window.addEventListener( "load", function () {
                     window.data = jsonData;
                     window.selectedEpisodeLength = window.data['environmentData']['episode'].length;
                     drawVisualization();
+                    d3.select('body').style("cursor","default");
                 });
             }
             else
@@ -988,6 +1139,8 @@ window.addEventListener( "load", function () {
                 window.data = window.jsonLogData[window.selectedEpisodeKey];
                 window.selectedEpisodeLength = window.data['environmentData']['episode'].length;
                 drawVisualization();
+                d3.select('body').style("cursor","default");
+
             }
             
         }
