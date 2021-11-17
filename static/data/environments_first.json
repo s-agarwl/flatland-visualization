@@ -1,0 +1,49 @@
+{
+    "11": {
+        "level_name": "Level 11",
+        "maps": {
+            "0": {
+                "map_name": "Map 0",
+                "techniques": [
+                    "RL","OR"
+                ]
+            }
+        }
+    },
+    "12": {
+        "level_name": "Level 12",
+        "maps": {
+            
+            "1":{
+                "map_name": "Map 1",
+                "techniques": [
+                    "RL","OR"
+                ]
+            }
+        }
+    },
+    "13": {
+        "level_name": "Level 13",
+        "maps": {
+           
+            "1":{
+                "map_name": "Map 1",
+                "techniques": [
+                    "RL","OR"
+                ]
+            }
+        }
+    },
+    "17": {
+        "level_name": "Level 17",
+        "maps": {
+            "0": {
+                "map_name": "Map 0",
+                "techniques": [
+                    "RL","OR"
+                ]
+            }
+        }
+    }
+
+}

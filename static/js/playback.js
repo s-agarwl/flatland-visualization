@@ -1,7 +1,7 @@
-function preparePlayback() {
+function preparePlayback(playbackData) {
   d3.select("#video").selectAll("*").remove();
 
-  var gameData = window.data["environmentData"];
+  var gameData = playbackData["environmentData"];
   var numRows = gameData["grid"].length;
   var numColumns = gameData["grid"][0].length;
   var episodeLength = gameData["episode"].length;
@@ -10,8 +10,10 @@ function preparePlayback() {
   _param.numColumns = numColumns;
 
   var playbackDiv = d3.select("#playbackDiv");
-  window.svgWidthHeight = 360;
+  window.svgWidthHeight = 332;
   var divwidth = playbackDiv.node().getBoundingClientRect().width;
+  
+  
   var video = d3
     .select("#video")
     .append("svg")
@@ -22,7 +24,9 @@ function preparePlayback() {
     .append("g")
     .attr("id", "playbackSvgGroup");
   var i = 0;
-  renderFirstFrame(gameData, i, video, numRows, numColumns, episodeLength);
+  renderFirstFrame(gameData, i, video, numRows, numColumns, episodeLength, playbackData);
+
+  
 
   i++;
   window.intervalId = null;
@@ -173,7 +177,7 @@ function renderFirstFrame(
   video,
   numRows,
   numColumns,
-  episodeLength
+  episodeLength, playbackData
 ) {
   video.selectAll("*").remove();
 
@@ -247,7 +251,7 @@ function renderFirstFrame(
   //     .attr("fill", function(d) { return "black"; });
 
   // render start positions of agents
-  for (var i = 0; i < agents.length; i++) {
+  for (var i = 0; i < agents.length && window.comparison == false; i++) {
     var imagePath = returnAgentImagePath(agents[i]["agent_index"]);
 
     // video.append("image").attrs({
@@ -360,7 +364,7 @@ function renderFirstFrame(
 //     });
 //   }
 
-  var stationDict = window.data["stationsDictionary"];
+  var stationDict = playbackData["stationsDictionary"];
   var stationGroup = video.append("g").selectAll("g").data(Object.keys(stationDict)).enter().append("g");
   stationGroup.append("image").attrs({
     "xlink:href": function () {
@@ -379,8 +383,8 @@ function renderFirstFrame(
         return "Station" + stationDict[d]["id"];
     }
   }).on("mouseover", function(d){
-      var trainsArray = window.data["stationsDictionary"][d]["trains"];
-      highlightStations([window.data["stationsDictionary"][d]["id"]]);
+      var trainsArray = playbackData["stationsDictionary"][d]["trains"];
+      highlightStations([playbackData["stationsDictionary"][d]["id"]]);
       highlightTrains(trainsArray);
   }).on("mouseout", function(){
     deHighlightStations();
@@ -388,7 +392,7 @@ function renderFirstFrame(
   });
 
 
-    findStationLabelPositions();
+    findStationLabelPositions(playbackData);
     var widthOfCell = window.svgWidthHeight / numColumns;
     var heightOfCell = window.svgWidthHeight / numRows;
 
@@ -405,14 +409,14 @@ function renderFirstFrame(
       "cursor":"pointer",
       "pointer-events":"all",
       "class": function(d){
-          return "stationLabel stationLabel"+stationDict[d]["id"];
+          return "stationLabelMap stationLabel"+stationDict[d]["id"];
       }
 
   }).text(function(d){
       return "S"+stationDict[d]["id"];
   }).on("mouseover", function(d){
-    var trainsArray = window.data["stationsDictionary"][d]["trains"];
-    highlightStations([window.data["stationsDictionary"][d]["id"]]);
+    var trainsArray = playbackData["stationsDictionary"][d]["trains"];
+    highlightStations([playbackData["stationsDictionary"][d]["id"]]);
     highlightTrains(trainsArray);
 }).on("mouseout", function(){
   deHighlightStations();
@@ -423,36 +427,49 @@ function renderFirstFrame(
   // Lasso functions to execute while lassoing
   // lasso.items(circles);
   // video.call(lasso);
+  if(window.comparison)
+  {
+    d3.select("#playbackControlsDiv").style("opacity",0.2);
+    d3.select("#animatedGraphSpan").style("opacity",0.2);
+  }
+  else
+  {
+    d3.select("#playbackControlsDiv").style("opacity",1);
+    d3.select("#animatedGraphSpan").style("opacity",1);
+
+
+  }
+
   enableSelectioninplaybackSVG();
-  computeOccupyingCellsByRegions(d3.select("#transitionGraphSvg"));
+  computeOccupyingCellsByRegions(d3.select("#transitionGraphSvg"), playbackData);
 }
 
-function findStationLabelPositions()
+function findStationLabelPositions(data)
 {
     
-    var stationDict = window.data["stationsDictionary"];
+    var stationDict = data["stationsDictionary"];
     var labelPositionSet = new Set();
     for(var key in stationDict)
     {
-        var returnDict = findAvailablePosition(stationDict[key]["pos"], labelPositionSet);
+        var returnDict = findAvailablePosition(stationDict[key]["pos"], labelPositionSet, data);
         var posString = "["+returnDict["pos"][0]+","+returnDict["pos"][1]+"]";
         labelPositionSet.add(posString);
         stationDict[key]["labelPosition"] = [returnDict["pos"][0],returnDict["pos"][1]];
         stationDict[key]["labelDistance"] = returnDict["dist"];
     }
 
-    window.data["stationsIdDictionary"] = {};
-    var tempOb = window.data["stationsDictionary"];
+    data["stationsIdDictionary"] = {};
+    var tempOb = data["stationsDictionary"];
     for(var key in tempOb)
     {
-        window.data["stationsIdDictionary"][tempOb[key]["id"]] = tempOb[key];
+        data["stationsIdDictionary"][tempOb[key]["id"]] = tempOb[key];
     }
     // console.log(stationDict);
 }
 
-function findAvailablePosition(position, labelPositionSet)
+function findAvailablePosition(position, labelPositionSet, data)
 {
-    var grid = window.data["environmentData"]["grid"];
+    var grid = window.grid;
     var numRows = grid.length;
     var numColumns = grid[0].length;
     var stationPos = position;
@@ -494,7 +511,7 @@ function posToSetElementString(pos) {
   return "[" + pos[0] + "," + pos[1] + "]";
 }
 
-function computeOccupyingCellsByRegions(svgRoot) {
+function computeOccupyingCellsByRegions(svgRoot, gameData) {
   var rectArray = _param.selectionRectanglesArray;
 
   var numColumns = _param.numColumns;
@@ -507,75 +524,75 @@ function computeOccupyingCellsByRegions(svgRoot) {
   var allSelectedCells = new Set();
 
 
-for(var i=0; i<window.selectedRegions.length; i++)
-{
-    var region = window.selectedRegions[i];
-    var id = region["id"];
-    if(region["type"] == "rect")
+    for(var i=0; i<window.selectedRegions.length; i++)
     {
-        var index = region["index"];
-        let setOfGridCells = new Set();
-        var x = +d3.select(rectArray[index]["_groups"][0][0]).attr("x");
-        var y = +d3.select(rectArray[index]["_groups"][0][0]).attr("y");
-        var selectionWidth = +d3
-        .select(rectArray[index]["_groups"][0][0])
-        .attr("width");
-        var selectionHeight = +d3
-        .select(rectArray[index]["_groups"][0][0])
-        .attr("height");
-
-        if (selectionWidth < widthHeight) selectionWidth = widthHeight;
-        if (selectionHeight < widthHeight) selectionHeight = widthHeight;
-
-        var startingX = Math.floor(x / widthHeight);
-        var startingY = Math.floor(y / widthHeight);
-
-        var rbcornerX = startingX + Math.ceil(selectionWidth / widthHeight);
-        var rbcornerY = startingY + Math.ceil(selectionHeight / widthHeight);
-
-        for (var j = startingX; j < rbcornerX; j++) {
-        for (var k = startingY; k < rbcornerY; k++) {
-            setOfGridCells.add(posToSetElementString([k, j]));
-            allSelectedCells.add(posToSetElementString([k, j]));
-        }
-        }
-
-        d3.select("#Rect" + (id)).attrs({
-            "x": startingX * widthHeight,
-            "y": startingY * widthHeight,
-            "width": (rbcornerX - startingX) * widthHeight,
-            "height": (rbcornerY - startingY) * widthHeight
-        });
-        d3.select("#Rect" + (id)).attr("y", startingY * widthHeight);
-        
-        var regionIdLabel = i + 1;
-        regionDict[regionIdLabel] = { id: regionIdLabel, cells: setOfGridCells };
-        nodes[regionIdLabel] = { id: regionDict[regionIdLabel]["id"], trains: {} };
-
-    }
-    else
-    {
-        var regionIdLabel = id;
-        var railId = region["railId"];
-
-        var continuousRail_id_pos_dict = window.data["continuousRail_id_pos_dict"];
-        // for(var selectedRailRegionId in _param.selectedRailRegionIds)
+        var region = window.selectedRegions[i];
+        var id = region["id"];
+        if(region["type"] == "rect")
         {
-            _param.selectedRailRegionIds[railId] = regionIdLabel;
-            var posArray = continuousRail_id_pos_dict[railId];
-            var setOfGridCells = new Set();
-            for(var x=0; x<posArray.length; x++)
-            {
-                var pos = posArray[x];
-                allSelectedCells.add(posToSetElementString(pos));
-                setOfGridCells.add(posToSetElementString(pos));
+            var index = region["index"];
+            let setOfGridCells = new Set();
+            var x = +d3.select(rectArray[index]["_groups"][0][0]).attr("x");
+            var y = +d3.select(rectArray[index]["_groups"][0][0]).attr("y");
+            var selectionWidth = +d3
+            .select(rectArray[index]["_groups"][0][0])
+            .attr("width");
+            var selectionHeight = +d3
+            .select(rectArray[index]["_groups"][0][0])
+            .attr("height");
+
+            if (selectionWidth < widthHeight) selectionWidth = widthHeight;
+            if (selectionHeight < widthHeight) selectionHeight = widthHeight;
+
+            var startingX = Math.floor(x / widthHeight);
+            var startingY = Math.floor(y / widthHeight);
+
+            var rbcornerX = startingX + Math.ceil(selectionWidth / widthHeight);
+            var rbcornerY = startingY + Math.ceil(selectionHeight / widthHeight);
+
+            for (var j = startingX; j < rbcornerX; j++) {
+            for (var k = startingY; k < rbcornerY; k++) {
+                setOfGridCells.add(posToSetElementString([k, j]));
+                allSelectedCells.add(posToSetElementString([k, j]));
             }
+            }
+
+            d3.select("#Rect" + (id)).attrs({
+                "x": startingX * widthHeight,
+                "y": startingY * widthHeight,
+                "width": (rbcornerX - startingX) * widthHeight,
+                "height": (rbcornerY - startingY) * widthHeight
+            });
+            d3.select("#Rect" + (id)).attr("y", startingY * widthHeight);
+            
+            var regionIdLabel = i + 1;
             regionDict[regionIdLabel] = { id: regionIdLabel, cells: setOfGridCells };
             nodes[regionIdLabel] = { id: regionDict[regionIdLabel]["id"], trains: {} };
-            regionIdLabel +=1;
+
+        }
+        else
+        {
+            var regionIdLabel = id;
+            var railId = region["railId"];
+
+            var continuousRail_id_pos_dict = window.data["continuousRail_id_pos_dict"];
+            // for(var selectedRailRegionId in _param.selectedRailRegionIds)
+            {
+                _param.selectedRailRegionIds[railId] = regionIdLabel;
+                var posArray = continuousRail_id_pos_dict[railId];
+                var setOfGridCells = new Set();
+                for(var x=0; x<posArray.length; x++)
+                {
+                    var pos = posArray[x];
+                    allSelectedCells.add(posToSetElementString(pos));
+                    setOfGridCells.add(posToSetElementString(pos));
+                }
+                regionDict[regionIdLabel] = { id: regionIdLabel, cells: setOfGridCells };
+                nodes[regionIdLabel] = { id: regionDict[regionIdLabel]["id"], trains: {} };
+                regionIdLabel +=1;
+            }
         }
     }
-}
 
 
 
@@ -585,7 +602,7 @@ for(var i=0; i<window.selectedRegions.length; i++)
 
   //
 
-  var episode = window.data["environmentData"]["episode"];
+  var episode = gameData["environmentData"]["episode"];
   var agent_index_currentRegionLocation = {};
 
   for (var i = 0; i < episode.length; i++) {
@@ -687,7 +704,7 @@ for(var i=0; i<window.selectedRegions.length; i++)
   _param.graph = { nodes: nodes, links: aggregatedEdges };
   _param.regionDictionary = regionDict;
   drawRegionsOnTimeline();
-  drawTransitionGraph(svgRoot);
+  drawTransitionGraph(svgRoot, gameData);
 }
 
 function drawRegionsOnTimeline()
@@ -718,6 +735,7 @@ function drawRegionsOnTimeline()
                         regionGroup.append("rect").attrs({
                         "x": x,
                         "y": globalYScale(agent_index) - heightOfrectangle/2 ,
+                        // "y": globalYScale(agent_index) ,
                         "width": width,
                         "height": heightOfrectangle,
                         "stroke": "black",
@@ -765,7 +783,7 @@ function computeContinuousTimesteps(timestepsInsideRegion)
     return result;
 }
 
-function drawTransitionGraph(svgRoot) {
+function drawTransitionGraph(svgRoot, playbackData) {
   var height = window.svgWidthHeight;
   var width = d3.select("#transitionGraphDiv").node().getBoundingClientRect()
     .width;
@@ -929,7 +947,7 @@ _param.edgeThicknessScale = edgeThicknessScale;
     });
 
   link.append("title").text(function (d) {
-    return "#Trains " + d.value;
+    return "#Transitions: " + d.value;
   });
 
   link
@@ -940,7 +958,7 @@ _param.edgeThicknessScale = edgeThicknessScale;
       d3.selectAll(".highlighters").attr("opacity", 0);
     });
 
-    var gameData = window.data["environmentData"];
+    var gameData = playbackData["environmentData"];
     var numRows = gameData["grid"].length;
     var numColumns = gameData["grid"][0].length;
 
@@ -1030,7 +1048,13 @@ _param.edgeThicknessScale = edgeThicknessScale;
     .attr("x", function (d) {
       return Math.sqrt(nodeSizeScale(d.numTrains) / Math.PI +15);
     })
-    .attr("y", 0);
+    .attr("y", 0)
+    .attr("font-size", function(){
+        if(window.figureForTeaser)
+            return "20px";
+        else
+            return "12px";
+    });;
 
 _param.graphNodeSelection = node;
 
@@ -1193,7 +1217,7 @@ function computeGraphForEachTimestep()
             var src = movement["source"];
             var target = movement["target"];
             var P0 = [src.x, src.y], P2=[target.x, target.y];
-            var P1 = calculateMidControlPoint(P0, P2);
+            var P1 = calculateMidControlPoint(P0, P2, 40);
             var xscale = d3.scaleLinear().domain([leavingTimestep, reachingTimestep]).range([src.x, target.x]);
             var yscale = d3.scaleLinear().domain([leavingTimestep, reachingTimestep]).range([src.y, target.y]);
 
@@ -1339,15 +1363,17 @@ function computeGraphForEachTimestep()
     });
 
     var currentFrame = parseInt($("#slider").slider("value"));
-    var gameData = window.data["environmentData"];
-  var numRows = gameData["grid"].length;
-  var numColumns = gameData["grid"][0].length;
+    
+
+    var numColumns = _param.numColumns;
+    var numRows = _param.numRows;
 
   _param.dynamicNodesSelection = d3.selectAll(".dynamicNodes circle");
   _param.dynamicLinksSelection = d3.selectAll(".dynamicLinks");
   _param.movingTrainsSelection = d3.selectAll(".movingTrains");
 
-  renderNextFrame(gameData, currentFrame, numRows, numColumns);
+  if(!window.comparison)
+    renderNextFrame(window.data["environmentData"], currentFrame, numRows, numColumns);
     
 }
 function calculateCurvedPathDAttribute(source, target)
@@ -1363,7 +1389,7 @@ function calculateCurvedPathDAttribute(source, target)
     var targetRadiusOffset = [ (diffx * target.radius) / pathLength , (diffy * target.radius) / pathLength];
 
     //P1- mid control point
-    var P1 = calculateMidControlPoint(P0, P2);
+    var P1 = calculateMidControlPoint(P0, P2, 40);
     return (
         "M" +
         (P0[0] + sourceRadiusOffset[0]) +
@@ -1380,10 +1406,10 @@ function calculateCurvedPathDAttribute(source, target)
       );
 }
 
-function calculateMidControlPoint(P0, P2)
+function calculateMidControlPoint(P0, P2, offset)
 {
 
-    var offset = 40;
+    // var offset = 40;
     var midpoint_x = (P0[0] + P2[0]) / 2;
     var midpoint_y = (P0[1] + P2[1]) / 2;
     var dx = P2[0] - P0[0];
@@ -1557,8 +1583,8 @@ function renderNextFrame(stateArray, i, numRows, numColumns) {
 
     }
   }
-
-  drawPerFrameStatistics(i);
+  if(!window.comparison)
+    drawPerFrameStatistics(i);
 }
 
 function drawPerFrameStatistics(frame_num) {

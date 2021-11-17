@@ -1,6 +1,9 @@
 function enableSelectioninplaybackSVG() {
   var offset = { x: -400, y: -100 };
-  _param.selectionRectanglesArray = [];
+//   if(window.mapwasChanged || _param.selectionRectanglesArray == undefined)
+    _param.selectionRectanglesArray = [];
+    window.selectedRegions = [];
+    window.selectedRegionIdCounter = 1;
 
   var selectionRect = {
     element: null,
@@ -9,6 +12,7 @@ function enableSelectioninplaybackSVG() {
     currentX: 0,
     originX: 0,
     originY: 0,
+    height: 0,
     id: -1,
     setElement: function (ele) {
       this.previousElement = this.element;
@@ -77,6 +81,11 @@ function enableSelectioninplaybackSVG() {
             if (regionId in _param.graph["nodes"]) {
                 var trainsDict = _param.graph["nodes"][regionId]["trains"];
                 var trainsArray = Object.keys(trainsDict);
+                if(window.comparison)
+                {
+                    trainsDictB = _param.bothGraphs["A"]["nodes"][regionId]["trains"];
+                    trainsArray = trainsArray.concat(Object.keys(trainsDictB));
+                }
                 highlightRegions([regionId]);
                 highlightTrains(trainsArray);
             }
@@ -87,13 +96,14 @@ function enableSelectioninplaybackSVG() {
             dehighlightRegions();
             });
         this.setElement(rectElement);
-        var grid = window.data["environmentData"]["grid"];
-        var numColumns = grid.length;
-        var numRows = grid[0].length;
+        // var grid = window.data["environmentData"]["grid"];
+        var numColumns = _param.numColumns;
+        var numRows = _param.numRows;
         
         var xPos = Math.floor(newX*numRows/window.svgWidthHeight);
         var yPos = Math.floor(newY*numColumns/window.svgWidthHeight);
-    var labelPosition = findAvailablePosition([yPos, xPos], new Set())["pos"];
+    var labelPosition = findAvailablePosition([yPos, xPos], new Set(), null)["pos"];
+            
         this.originX = newX;
         this.originY = newY;
         this.id = id;
@@ -101,11 +111,13 @@ function enableSelectioninplaybackSVG() {
         var selectionText = zoomPanGroup
             .append("text")
             .attrs({
-            x: (labelPosition[1]*window.svgWidthHeight)/numRows,
-            y: (labelPosition[0]*window.svgWidthHeight)/numColumns,
+            x: Math.ceil((labelPosition[1]*window.svgWidthHeight)/numRows),
+            y: Math.ceil((labelPosition[0]*window.svgWidthHeight)/numColumns),
             class: "regionIdText",
             "font-size": "10px",
             "id": "TextRect" + id,
+            "dominant-baseline": "hanging",
+            "text-anchor": "start"
             })
             .text("R" + id);
         _param.selectionRectanglesArray.push(rectElement);
@@ -115,11 +127,13 @@ function enableSelectioninplaybackSVG() {
     update: function (newX, newY) {
       this.currentX = newX;
       this.currentY = newY;
+      this.height = this.currentY - this.originY;
       this.element.attrs(this.getNewAttributes());
       d3.select("#TextRect" + this.id).attrs({
         x: newX,
         y: newY - 5,
       });
+    //   console.log(this.height);
     },
     focus: function () {
     //   this.element.style("stroke", "#000000").style("stroke-width", "1px");
@@ -139,6 +153,7 @@ function enableSelectioninplaybackSVG() {
     var videoSVG = document.getElementById("videoSVG");
 
     let domPt = videoSVG.createSVGPoint();
+    // let domPt =new DOMPoint();
 
     domPt.x = p[0] * (1 / window.zoomFactor);
     domPt.y = p[1] * (1 / window.zoomFactor);
@@ -148,6 +163,7 @@ function enableSelectioninplaybackSVG() {
     let svgPt2 = svgPt.matrixTransform(tMatrix.inverse());
     return [svgPt2.x, svgPt2.y];
   }
+
 
   function dragStart(e) {
     if(window.areaSelection == "rect")
@@ -170,18 +186,43 @@ function enableSelectioninplaybackSVG() {
   function dragEnd() {
       if(window.areaSelection == "rect")
       {
+          
         selectionRect.focus();
         window.playClicked = false;
-        computeGraphForEachTimestep();
+        if(!window.comparison)
+            computeGraphForEachTimestep();
         $("#aggregatedRadio").prop("checked", true);
         $("#aggregatedRadio").click();
+        if(!window.comparison)
+            computeOccupyingCellsByRegions(d3.select("#transitionGraphSvg"), window.singleSelectedData);
+        else
+            computeOccupyingCellsByRegionsForBoth(d3.select("#transitionGraphSvg"), window.dataA, window.dataB);
 
-        computeOccupyingCellsByRegions(d3.select("#transitionGraphSvg"));
         var thisRect = d3.select("#Rect" + _param.selectionRectanglesArray.length);
+        
+        var height = +thisRect.attr("height");
+        var rectEle = d3.select("#TextRect"+thisRect.attr("plainId"));
+        var oldYPos = +rectEle.attr("y");
+        if(height > _param.numRows/window.svgWidthHeight)
+            rectEle.attr("y", oldYPos-height/2);
+
         var regionId = +thisRect.attr("plainId");
-        var trainsDict = _param.graph["nodes"][regionId]["trains"];
-        var trainsArray = Object.keys(trainsDict);
-        thisRect.append("title").text( "R"+regionId +": #trains = " + trainsArray.length);
+
+        if(!window.comparison)
+        {
+            var trainsDict = _param.graph["nodes"][regionId]["trains"];
+            var trainsArray = Object.keys(trainsDict);
+            thisRect.append("title").text( "R"+regionId +": #trains = " + trainsArray.length);
+        }
+        else
+        {
+            var trainsDictA = _param.bothGraphs["A"]["nodes"][regionId]["trains"];
+            var trainsArrayA = Object.keys(trainsDictA);
+            var trainsDictB = _param.bothGraphs["B"]["nodes"][regionId]["trains"];
+            var trainsArrayB = Object.keys(trainsDictB);
+
+            thisRect.append("title").text( "R"+regionId +": #trains: A=" + trainsArrayA.length + " B="+trainsArrayB.length);
+        }
       }
   }
 

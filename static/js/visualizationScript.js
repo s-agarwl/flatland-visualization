@@ -7,7 +7,8 @@ _param = {
   timespan: window.selectedEpisodeLength,
 
   entities: [],
-  events: ["Move", "Start", "End", "Junction", "Malfunction", "Deadlock"],
+  events: ["Start", "End", "Junction", "Move",  "Malfunction", "Deadlock"],
+  eventsComparison: ["Start", "End", "Junction", "MoveA", "MoveB", "MalfunctionA", "MalfunctionB", "DeadlockA", "DeadlockB"],
   eventsDictionary: {
     Move: "movement",
     Start: "startTrain",
@@ -16,19 +17,38 @@ _param = {
     Malfunction: "malfunction",
     Deadlock: "deadlock",
   },
+  eventsDictionaryComparison: {
+    MoveA: "movementA",
+    MoveB: "movementB",
+    Start: "startTrain",
+    End: "endTrain",
+    Junction: "junction",
+    MalfunctionA: "malfunctionA",
+    MalfunctionB: "malfunctionB",
+    DeadlockA: "deadlockA",
+    DeadlockB: "deadlockB",
+  },
   eventSumDictionary: {},
   leftPadding: 0,
   rightPadding: 200,
   topPadding: 60,
-  bottomPadding: 40,
+  bottomPadding: 30,
   svgWidth: 900,
-  svgHeight: 800,
+  svgHeight: 760,
   height: 600,
   textEnd: 150,
   marginTextBeforeMatrix: 30,
   glyphOPacity: 0.7,
-  colors: ["#ec6502", "#5eaacb ", "#00cc00", "#eb298d", "#000000"],
+//   colors: ["#ec6502", "#5eaacb ", "#00cc00", "#eb298d", "#000000"],
+  colors: ["#5a5a5a", "#5eaacb ", "#00cc00", "#eb298d", "#000000"],
+//   colorA: "#377eb8",
+//   colorB: "#ff7f00",
+
+  colorA: "#0394FC",
+  colorB: "#FC6B03",
   agentTimelineData: [],
+  agentTimelineDataA: [],
+  agentTimelineDataB: [],
   entitiesArray: [],
   minHeightOfRow: 15,
   reachedIcon: "\ue013",
@@ -44,7 +64,7 @@ _param = {
   histogramBarColor: "#4d4747",
   highlightColor: "#ffea00",
   deadlockShapeFillColor: "none",
-  deadlockShapeBoundaryColor: "#e50000",
+  deadlockShapeBoundaryColor: "#000000",
   deadlockShapeStrokeWidth: "2px",
   nodeColor: "grey",
   linkColor: "grey",
@@ -54,11 +74,12 @@ _param = {
 //   nodeMaxRadius: 10,
 //   linkMinWidth: 2,
 //   linkMaxWidth: 8,
-    nodeMinRadius: 6,
+    nodeMinRadius: 8,
     nodeMaxRadius: 15,
     linkMinWidth: 2,
-    linkMaxWidth: 8,
-  trainColorInDynamicGraph: "grey"
+    linkMaxWidth: 7,
+  trainColorInDynamicGraph: "grey",
+  rowFactor: 5
 
 };
 
@@ -69,9 +90,9 @@ function sameLengthAgentName(trainNum) {
   else stringTrainNum = "" + trainNum;
   return stringTrainNum;
 }
-function sameLengthStationId(stationid) {
+function sameLengthStationId(stationid, data) {
   var stringStationNum = "";
-  if (Object.keys(window.data["stationsDictionary"]).length < 10)
+  if (Object.keys(data["stationsDictionary"]).length < 10)
     stringStationNum = stationid;
   else {
     if (stationid < 10) stringStationNum = "0" + stationid;
@@ -247,7 +268,7 @@ function scrollFunction(e) {
           window.currentVerticalPosition * _param.scrollRatio +
           ")"
       );
-  } else if (window.currentVerticalPosition > _param.differenceOfHeight) {
+  } else if (window.currentVerticalPosition > _param.differenceOfHeight && _param.differenceOfHeight!=0) {
     window.currentVerticalPosition = _param.differenceOfHeight;
     d3.select("#mainVisualizationGroup")
       .transition()
@@ -303,14 +324,14 @@ function agentImage(agentIndex) {
   return imageName;
 }
 
-function drawRailRegions()
+function drawRailRegions(data)
 {
     d3.select("#railRegionGroup").selectAll("*").remove();
   var railRegionGroup = d3.select("#railRegionGroup").append("g").attr("pointer-events", "none");
-  var grid = window.data["environmentData"]["grid"];
-  var numColumns = grid.length;
-  var numRows = grid[0].length;
-    var continuousRail_id_pos_dict = window.data["continuousRail_id_pos_dict"];
+  var grid = data["environmentData"]["grid"];
+  var numColumns = _param.numColumns;
+  var numRows = _param.numRows;
+    var continuousRail_id_pos_dict = data["continuousRail_id_pos_dict"];
 _param.selectedRailRegionIds = {};
 
   for(var id in continuousRail_id_pos_dict)
@@ -364,7 +385,7 @@ _param.selectedRailRegionIds = {};
             window.selectedRegions.push({"type":"rail", "railId": railRegionId, "id": id});
             var rowNum = +d3.select(this).attr("rowNum");
             var colNum = +d3.select(this).attr("colNum");
-            var labelPosition = findAvailablePosition([rowNum, colNum], new Set())["pos"];
+            var labelPosition = findAvailablePosition([rowNum, colNum], new Set(), window.data)["pos"];
             d3.select("#playbackSvgGroup").append("text")
             .attrs({
                 x: (labelPosition[1]* window.svgWidthHeight) / numColumns,
@@ -377,14 +398,25 @@ _param.selectedRailRegionIds = {};
             window.playClicked = false;
             $("#aggregatedRadio").prop("checked", true);
             $("#aggregatedRadio").click();
-            computeOccupyingCellsByRegions(d3.select("#transitionGraphSvg"));
+            
+            if(!window.comparison)
+                computeOccupyingCellsByRegions(d3.select("#transitionGraphSvg"), window.singleSelectedData);
+            else
+                computeOccupyingCellsByRegionsForBoth(d3.select("#transitionGraphSvg"), window.dataA, window.dataB);
 
             d3.selectAll(".railRegion"+railRegionId).append("title").text(function(){
                 if(railRegionId in _param.selectedRailRegionIds)
                 {
                     var selectedRegionId = _param.selectedRailRegionIds[railRegionId];
-                    var trainsDict = _param.graph["nodes"][selectedRegionId]["trains"];
-                    return "R"+selectedRegionId+" : #trains = "+Object.keys(trainsDict).length;
+                    var trainsDict, numTrains=0;
+                    if((window.comparison))
+                    {
+                        numTrains = Object.keys(_param.bothGraphs["A"]["nodes"][selectedRegionId]["trains"]).length;
+                        numTrains += Object.keys(_param.bothGraphs["B"]["nodes"][selectedRegionId]["trains"]).length;
+                    }
+                     else
+                        numTrains = Object.keys(_param.graph["nodes"][selectedRegionId]["trains"]).length;
+                    return "R"+selectedRegionId+" : #trains = "+numTrains;
                 }
             })
         });
@@ -398,6 +430,9 @@ function drawHeatmap(agentIds) {
   //BUG: trains target position is not logged, and hence appear as 0 in the heatmap
   var agentIndicesArray = [];
   var heatmapGrid = [];
+
+  d3.select("#occupancyLabel").text("Occupancy Distribution");
+
 
   var grid = window.data["environmentData"]["grid"];
   var agentTrajectoryData = window.data["agentTrajectoryData"];
@@ -437,10 +472,11 @@ function drawHeatmap(agentIds) {
   d3.select("#heatMap").selectAll("*").remove();
 //   var playbackSvg = d3.select("#videoSVG g").append("g").attr("id", "heatMap");
   var playbackSvg = d3.select("#heatMap").append("g");
-  if (window.heatmapColorScale == undefined) {
+//   if (window.heatmapColorScale == undefined) {
     // window.heatmapColorScale = d3.scaleLinear().domain([0,max]).range([0,1]);
-    window.heatmapColorScale = d3.scaleLog().domain([1, max]).range([0.1, 0.7]);
-  }
+    // window.heatmapColorScale = d3.scaleLog().domain([1, max]).range([0.1, 0.7]);
+    window.heatmapColorScale = d3.scaleSequential(d3.interpolateRgb("#ffffff", "red")).domain([0,max]);
+//   }
 
   var numColumns = heatmapGrid.length;
   var numRows = heatmapGrid[0].length;
@@ -457,15 +493,18 @@ function drawHeatmap(agentIds) {
           stroke: "none",
           "stroke-opacity": 1,
           class: "heatmapTiles",
-          fill: "red",
+          fill: function(){
+              return heatmapColorScale(heatmapGrid[i][j]);
+          },
           isRail: function () {
             if (grid[i][j] != 0) return true;
             else return false;
           },
-          "fill-opacity": function () {
-            if (heatmapGrid[i][j] == 0) return 0;
-            else return window.heatmapColorScale(heatmapGrid[i][j]);
-          },
+          "fill-opacity": 0.5
+        //   function () {
+        //     if (heatmapGrid[i][j] == 0) return 0;
+        //     else return window.heatmapColorScale(heatmapGrid[i][j]);
+        //   },
         })
         .on("mouseover", function () {
           if (d3.select(this).attr("isRail") == "true")
@@ -477,10 +516,62 @@ function drawHeatmap(agentIds) {
         .append("title")
         .text(function () {
           if (grid[i][j] != 0)
-            return "Occupied for " + heatmapGrid[i][j] + " steps";
+            return "Occupied for " + heatmapGrid[i][j] + " timesteps";
         });
     }
   }
+
+  colorScale = window.heatmapColorScale;
+    const svg = d3.select("#videoSVG");
+    const defs = svg.append("defs");
+    var width = window.svgWidthHeight*2/3, height=window.svgWidthHeight;
+    barHeight = 10;
+    margin = ({top: window.svgWidthHeight - 1.5*barHeight, right: 5, bottom: 13, left: width/2})
+
+    const linearGradient = defs.append("linearGradient")
+        .attr("id", "linear-gradient");
+    axisBottom = g => g
+  .attr("class", `x-axis`)
+  .attr("transform", `translate(${margin.left},${height - margin.bottom})`)
+  .call(d3.axisBottom(axisScale)
+    .ticks(width / 50)
+    .tickSize(-barHeight))
+    axisScale = d3.scaleLinear()
+    .domain(colorScale.domain())
+    .range([10,  width+10])
+    
+    
+    linearGradient.selectAll("stop")
+      .data(colorScale.ticks().map(function(t, i, n){ 
+          return {offset: `${100*i/n.length}%`, color: colorScale(t)}; }))
+      .enter().append("stop")
+      .attr("offset", d => d.offset)
+      .attr("stop-color", d => d.color);
+    
+    var legendGroup = svg.append('g');
+      legendGroup.append("rect")
+        // .attr('transform', `translate(${margin.left}, 0)`)
+        .attr("width", width )
+        .attr("height", barHeight)
+        .style("fill", "url(#linear-gradient)")
+        .style("fill-opacity", 0.5);
+        svg.append("text").attrs({
+            x: 10,
+            y: margin.top-2,
+            "font-size": "13px"
+        }).text("Occupancy :");
+        svg.append("text").attrs({
+            x: 10,
+            y: margin.top + 11,
+            "font-size": "13px"
+        }).text("(timesteps)");
+    legendGroup.attr("transform", `translate(${margin.left + 10},${height - margin.bottom - barHeight})`);
+
+    
+    svg.append('g')
+      .call(axisBottom);
+
+
   if (window.showHeatmap == false) {
     d3.select("#heatMap").attr("display", "none");
     document.getElementById("heatmapCheckbox").checked = false;
@@ -582,14 +673,14 @@ function drawEventHistogram(eventType, entity, binSize, data, counter, root) {
     .range([0, window.maxHeightOfHistogramBars]);
   if (root == undefined) {
     root = d3
-      .select("#mainVisualizationGroup")
+      .select("#mainVisualization")
       .append("g")
       .attr("id", "histogram");
   } else {
     root.selectAll("*").remove();
     root.remove();
     root = d3
-      .select("#mainVisualizationGroup")
+      .select("#mainVisualization")
       .append("g")
       .attr("id", "histogram");
   }
@@ -602,6 +693,14 @@ function drawEventHistogram(eventType, entity, binSize, data, counter, root) {
   } else {
     shortName = fullName;
   }
+
+  root.append("rect").attrs({
+    x: 0,
+    y: -maxHeightOfHistogramBars - 5,
+    width: _param.mainVisualizationSvgWidth - 20,
+    height: window.maxHeightOfHistogramBars + 25,
+    fill:"white"
+});
 
   root
     .append("text")
@@ -708,7 +807,8 @@ function drawEventHistogram(eventType, entity, binSize, data, counter, root) {
 //     "stroke-width": "1px",
 //     // "fill":"gray"
 //   });
-  root.attr("style", "transform: translate(0px," + y_Pos + "px);");
+    root.attr("style", "transform: translate(0px," + (_param.svgHeight-10)  + "px);");
+    //   root.attr("style", "transform: translate(0px," + y_Pos + "px);");
 }
 
 function countSetBits(n) {
@@ -793,8 +893,9 @@ function calculateDirectionFromOffset(offset) {
 function positionToString(pos) {
   return "[" + pos[0] + "," + pos[1] + "]";
 }
-function processData() {
-  var episodeData = window.data["environmentData"];
+function processData(data, submission) {
+  var episodeData = data["environmentData"];
+
   var numTimesteps = episodeData["max_episode_steps"];
   var agentTimelineData = [];
   var agentInfoDictionary = {};
@@ -807,9 +908,14 @@ function processData() {
     agentIndex_DestinationDictionary[episodeData["agents"][i]["agent_index"]] =
       episodeData["agents"][i]["target"];
   }
-  window.data[
-    "agentIndex_DestinationDictionary"
-  ] = agentIndex_DestinationDictionary;
+  if(submission == "A")
+    window.dataA[
+        "agentIndex_DestinationDictionary"
+    ] = agentIndex_DestinationDictionary;
+   else if(submission == "B")
+    window.dataB[
+        "agentIndex_DestinationDictionary"
+    ] = agentIndex_DestinationDictionary;
   // console.log("Before preprocessing: ", episodeData);
 
   for (var i = 0; i < episodeData["agents"].length; i++) {
@@ -841,7 +947,11 @@ function processData() {
       };
     }
   }
-  window.data["stationsDictionary"] = stationsDictionary;
+
+  if(submission == "A")
+    window.dataA["stationsDictionary"] = stationsDictionary;
+else if(submission == "B")
+    window.dataB["stationsDictionary"] = stationsDictionary;
   // Store the malfunction of each trains
 
   for (var i = 0; i < episodeData["episode"].length; i++) {
@@ -1101,26 +1211,44 @@ function computePerFrameStatistics(agentTimelineData) {
   return perFrameStatsArray;
 }
 
-function drawOverallStatistics(overallStatisticsDict) {
+function drawOverallStatistics(overallStatisticsDict, boolA, boolB) {
   var percentDone =
     (overallStatisticsDict.totalNumTrainsReachedDestination /
       overallStatisticsDict.totalNumTrains) *
     100;
-  d3.select("#percentDone").text(percentDone.toFixed(2) + "%");
-  d3.select("#totalNumTrains").text(overallStatisticsDict.totalNumTrains);
-  d3.select("#totalNumTrainsReachedDestination").text(
-    overallStatisticsDict.totalNumTrainsReachedDestination
-  );
-  d3.select("#totalNumTrainsYetToRun").text(
-    overallStatisticsDict.totalNumTrainsYetToRun
-  );
-  d3.select("#totalNumTrainsInProgress").text(
-    overallStatisticsDict.totalNumTrainsInProgress
-  );
+    if(boolA == true && boolB == false)
+    {
+        d3.select("#percentDoneA").text(percentDone.toFixed(2) + "%");
+        d3.select("#totalNumTrainsA").text(overallStatisticsDict.totalNumTrains);
+        d3.select("#totalNumTrainsReachedDestinationA").text(
+            overallStatisticsDict.totalNumTrainsReachedDestination
+        );
+        d3.select("#totalNumTrainsYetToRunA").text(
+            overallStatisticsDict.totalNumTrainsYetToRun
+        );
+        d3.select("#totalNumTrainsInProgressA").text(
+            overallStatisticsDict.totalNumTrainsInProgress
+        );
+    }
+    else if(boolA == false && boolB == true)
+    {
+        d3.select("#percentDoneB").text(percentDone.toFixed(2) + "%");
+        d3.select("#totalNumTrainsB").text(overallStatisticsDict.totalNumTrains);
+        d3.select("#totalNumTrainsReachedDestinationB").text(
+            overallStatisticsDict.totalNumTrainsReachedDestination
+        );
+        d3.select("#totalNumTrainsYetToRunB").text(
+            overallStatisticsDict.totalNumTrainsYetToRun
+        );
+        d3.select("#totalNumTrainsInProgressB").text(
+            overallStatisticsDict.totalNumTrainsInProgress
+        );
+    }
+
 }
 
-function computeHistogramData(data, metric, binSize) {
-  var numBins = Math.ceil(window.selectedEpisodeLength / binSize);
+function computeHistogramData(data, metric, binSize, episodeLength) {
+  var numBins = Math.ceil(episodeLength / binSize);
   var outputData = [];
 
   for (var i = 0; i < numBins; i++) {
@@ -1135,7 +1263,7 @@ function computeHistogramData(data, metric, binSize) {
       ) {
         if (!(k in perAgentCount)) perAgentCount[k] = 0;
 
-        if (datumIndex >= window.selectedEpisodeLength) {
+        if (datumIndex >= episodeLength) {
           outputData.push(count);
           return outputData;
         }
@@ -1173,7 +1301,9 @@ function computeHistogramData(data, metric, binSize) {
   // console.log(outputData);
   return outputData;
 }
-function makeSideVerticalLine(y1, y2, groupType, svg, icon) {
+
+// Partly deprecated, made another function to make vertical lines for comparision mode makeSideVerticalLineForBoth()
+function makeSideVerticalLine(y1, y2, groupType, svg, icon, boolCompare) {
   var x = 50,
     tickLength = 5,
     distToLine = 13;
@@ -1212,9 +1342,27 @@ function makeSideVerticalLine(y1, y2, groupType, svg, icon) {
         "rotate(-90, " + (x - distToLine) + "," + (y1 + (y2 - y1) / 2) + ")",
     })
     .text(function () {
-      if (groupType == "ontrack") return "On-track";
-      else if (groupType == "reached") return "Reached";
-      else if (groupType == "yettostart") return "Did not start";
+      if (groupType == "ontrack") 
+      {
+          if(boolCompare) 
+            return "On-track (A & B)"
+        else
+            return "On-track";
+      }
+      else if (groupType == "reached")
+      {
+          if(boolCompare) 
+            return "Reached (A & B)"
+        else 
+            return "Reached";
+      }
+      else if (groupType == "yettostart")
+      {
+          if(boolCompare) 
+            return "Did not start (A & B)"
+        else
+           return "Did not start";
+      }
     });
   if (icon != undefined) {
     svg
@@ -1240,10 +1388,50 @@ function makeSideVerticalLine(y1, y2, groupType, svg, icon) {
   }
 }
 
-function drawDeadlockVis(svg) {
+function drawDeadlockVis(svg, boolA, boolB) {
   var dlockGroup = svg.append("g");
-  var deadLockDictionary = window.data["deadlockData"];
+  var data;
+  if(boolA == true && boolB == false)
+    data = window.dataA;
+else if(boolA == false && boolB == true)
+    data = window.dataB;
+    
+  var deadLockDictionary = data["deadlockData"];
   var lineHeightAboveDSquare = 3 + _param.radiusOfCircle;
+
+  for (var dlockid in deadLockDictionary) 
+  {
+    var details = deadLockDictionary[dlockid];
+    involvedAgents = details["finalset"];
+    updatedInvolvedAgents = [];
+    for(var i=0; i<involvedAgents.length; i++)
+    {
+        var agentstatus = data["environmentData"]["agents"][involvedAgents[i]]["status"];
+        switch(agentstatus)
+        {
+            case 1: updatedInvolvedAgents.push(involvedAgents[i]);
+                break;
+        }
+    }
+    data["deadlockData"][dlockid]["finalset"] = updatedInvolvedAgents;
+    
+
+    initialAgents = details["originalset"];
+    updatedInitialAgents = [];
+    for(var i=0; i<initialAgents.length; i++)
+    {
+        var agentstatus = data["environmentData"]["agents"][initialAgents[i]]["status"];
+        switch(agentstatus)
+        {
+            case 1: updatedInitialAgents.push(initialAgents[i]);
+                break;
+        }
+    }
+    data["deadlockData"][dlockid]["originalset"] = updatedInitialAgents;
+    if(updatedInvolvedAgents.length == 0 || updatedInitialAgents.length == 0)
+        delete data["deadlockData"][dlockid];
+
+  }
 
   for (var dlockid in deadLockDictionary) {
     var details = deadLockDictionary[dlockid];
@@ -1262,13 +1450,48 @@ function drawDeadlockVis(svg) {
 
     dlockGroup.append("line").attrs({
       x1: endXPosOfAgentsStartingDeadlock,
-      y1: y1 - lineHeightAboveDSquare,
+      y1: function(){
+          var tempY =  y1;
+          if(positionsOfInvolvedAgents.length>2)
+            tempY = tempY - lineHeightAboveDSquare;
+            if(window.comparison)
+            {
+                if(boolA)
+                    tempY =  tempY - _param.heightOfRow/_param.rowFactor;
+                else if(boolB)
+                    tempY =  tempY + _param.heightOfRow/_param.rowFactor;
+            }
+            return tempY;
+        },
       x2: endXPosOfAgentsStartingDeadlock,
-      y2: y2,
-      stroke: "black",
+      y2: function(){
+        var tempY =  y2;
+      if(window.comparison)
+      {
+          if(boolA)
+              tempY =  tempY - _param.heightOfRow/_param.rowFactor;
+          else if(boolB)
+              tempY =  tempY + _param.heightOfRow/_param.rowFactor;
+      }
+      return tempY;
+    },
+      stroke: function(){
+        if(boolA)
+            return _param.colorA;
+        else if(boolB)
+            return _param.colorB;
+    },
       // "stroke-dasharray":"5 5",
       "stroke-width": "1px",
-      class: "deadlockShape timeLineVisComponent deadlock" + dlockid,
+      class: function(){
+        var classes =   "deadlockShape timeLineVisComponent deadlock" + dlockid;
+        if(boolA)
+            classes +=" deadlockA";
+        else if(boolB)
+            classes += " deadlockB";
+        return classes;
+      }
+        
     });
 
     trainsAddedToDeadlock = details["added"];
@@ -1283,13 +1506,45 @@ function drawDeadlockVis(svg) {
         }
         dlockGroup.append("line").attrs({
         x1: endXPosOfAgentsStartingDeadlock,
-        y1: y1 - lineHeightAboveDSquare,
+        y1: function(){
+            var tempY =  y1- lineHeightAboveDSquare;
+          if(window.comparison)
+          {
+              if(boolA)
+                  tempY =  tempY - _param.heightOfRow/_param.rowFactor;
+              else if(boolB)
+                  tempY =  tempY + _param.heightOfRow/_param.rowFactor;
+          }
+          return tempY;
+        },
         x2: globalXScale(maxStep),
-        y2: y1 - lineHeightAboveDSquare,
-        stroke: "black",
+        y2: function(){
+            var tempY =  y1 - lineHeightAboveDSquare;
+          if(window.comparison)
+          {
+              if(boolA)
+                  tempY =  tempY - _param.heightOfRow/_param.rowFactor;
+              else if(boolB)
+                  tempY =  tempY + _param.heightOfRow/_param.rowFactor;
+          }
+          return tempY;
+        },
+        stroke: function(){
+            if(boolA)
+                return _param.colorA;
+            else if(boolB)
+                return _param.colorB;
+        },
         // "stroke-dasharray":"5 5",
         "stroke-width": "1px",
-        class: "deadlockShape timeLineVisComponent deadlock" + dlockid,
+        class:function(){
+            var classes =   "deadlockShape timeLineVisComponent deadlock" + dlockid;
+            if(boolA)
+                classes +=" deadlockA";
+            else if(boolB)
+                classes += " deadlockB";
+            return classes;
+          }
         });
     }
 
@@ -1316,35 +1571,89 @@ function drawDeadlockVis(svg) {
 
         dlockGroup.append("line").attrs({
           x1: globalXScale(step),
-          y1: y1 - lineHeightAboveDSquare,
+          y1: function(){
+            var tempY =  y1 - lineHeightAboveDSquare;
+          if(window.comparison)
+          {
+              if(boolA)
+                  tempY =  tempY - _param.heightOfRow/_param.rowFactor;
+              else if(boolB)
+                  tempY =  tempY + _param.heightOfRow/_param.rowFactor;
+          }
+          return tempY;
+        },
           x2: globalXScale(step),
-          y2: y2,
-          stroke: "black",
+          y2: function(){
+            var tempY =  y2;
+          if(window.comparison)
+          {
+              if(boolA)
+                  tempY =  tempY - _param.heightOfRow/_param.rowFactor;
+              else if(boolB)
+                  tempY =  tempY + _param.heightOfRow/_param.rowFactor;
+          }
+          return tempY;
+        },
+          stroke: function(){
+            if(boolA)
+                return _param.colorA;
+            else if(boolB)
+                return _param.colorB;
+        },
           // "stroke-dasharray":"5 5",
           "stroke-width": "1px",
-          class: "deadlockShape timeLineVisComponent deadlock" + dlockid,
+          class: function(){
+            var classes =   "deadlockShape timeLineVisComponent deadlock" + dlockid;
+            if(boolA)
+                classes +=" deadlockA";
+            else if(boolB)
+                classes += " deadlockB";
+            return classes;
+          }
         });
 
         dlockGroup
           .append("rect")
           .attrs({
             x: x2 - _param.radiusOfCircle,
-            y: y2 - _param.radiusOfCircle,
+            y: function(){
+                var tempY =  y2 - _param.radiusOfCircle;
+              if(window.comparison)
+              {
+                  if(boolA)
+                      tempY =  tempY - _param.heightOfRow/_param.rowFactor;
+                  else if(boolB)
+                      tempY =  tempY + _param.heightOfRow/_param.rowFactor;
+              }
+              return tempY;
+            },
             width: 2 * _param.radiusOfCircle,
             height: 2 * _param.radiusOfCircle,
-            fill: _param.deadlockShapeFillColor,
+            fill: function(){
+                if(boolA)
+                    return _param.colorA;
+                else if(boolB)
+                    return _param.colorB;
+            },
             opacity: _param.glyphOPacity,
             stroke: _param.deadlockShapeBoundaryColor,
             "stroke-width": _param.deadlockShapeStrokeWidth,
             "stroke-opacity": 1,
-            class: "deadlockShape timeLineVisComponent deadlock" + dlockid,
+            class:function(){
+                var classes =   "deadlockShape timeLineVisComponent deadlock" + dlockid;
+                if(boolA)
+                    classes +=" deadlockA";
+                else if(boolB)
+                    classes += " deadlockB";
+                return classes;
+              },
             deadlockid: dlockid,
             cursor: "pointer",
             "pointer-events": "all",
           })
           .on("mouseover", function (d, i) {
             var dlockid = d3.select(this).attr("deadlockid");
-            var trains = window.data["deadlockData"][dlockid]["finalset"];
+            var trains = data["deadlockData"][dlockid]["finalset"];
             highlightTrains(trains);
           })
           .on("mouseout", function () {
@@ -1353,7 +1662,7 @@ function drawDeadlockVis(svg) {
           .append("title")
           .text(
             "Deadlock between trains " +
-              window.data["deadlockData"][dlockid]["finalset"]
+              data["deadlockData"][dlockid]["finalset"]
           );
       }
     }
@@ -1372,22 +1681,44 @@ function drawDeadlockVis(svg) {
         .append("rect")
         .attrs({
           x: endXPosOfAgentsStartingDeadlock - _param.radiusOfCircle,
-          y: positionsOfInvolvedAgents[i] - _param.radiusOfCircle,
+          y: function(){
+            var tempY = positionsOfInvolvedAgents[i] - _param.radiusOfCircle;
+          if(window.comparison)
+          {
+              if(boolA)
+                  tempY =  tempY - _param.heightOfRow/_param.rowFactor;
+              else if(boolB)
+                  tempY =  tempY + _param.heightOfRow/_param.rowFactor;
+          }
+          return tempY;
+        },
           width: 2 * _param.radiusOfCircle,
           height: 2 * _param.radiusOfCircle,
-          fill: _param.deadlockShapeFillColor,
+          fill: function(){
+            if(boolA)
+                return _param.colorA;
+            else if(boolB)
+                return _param.colorB;
+        },
           opacity: _param.glyphOPacity,
           stroke: _param.deadlockShapeBoundaryColor,
           "stroke-width": _param.deadlockShapeStrokeWidth,
           "stroke-opacity": 1,
-          class: "deadlockShape timeLineVisComponent deadlock" + dlockid,
+          class: function(){
+            var classes =   "deadlockShape timeLineVisComponent deadlock" + dlockid;
+            if(boolA)
+                classes +=" deadlockA";
+            else if(boolB)
+                classes += " deadlockB";
+            return classes;
+          },
           deadlockid: dlockid,
           cursor: "pointer",
           "pointer-events": "all",
         })
         .on("mouseover", function (d, i) {
           var dlockid = d3.select(this).attr("deadlockid");
-          var trains = window.data["deadlockData"][dlockid]["finalset"];
+          var trains = data["deadlockData"][dlockid]["finalset"];
           highlightTrains(trains);
         })
         .on("mouseout", function () {
@@ -1396,7 +1727,7 @@ function drawDeadlockVis(svg) {
         .append("title")
         .text(
           "Deadlock between trains " +
-            window.data["deadlockData"][dlockid]["finalset"]
+            data["deadlockData"][dlockid]["finalset"]
         );
     }
   }
@@ -1433,7 +1764,7 @@ function highlightEventsFunc() {
   }
 }
 
-function drawLegendOfEncodings(svg) {
+function drawLegendOfEncodings(svg, boolA, boolB) {
   var eventLegendGroup = svg.append("g");
   var rectX,
     rectY,
@@ -1444,8 +1775,13 @@ function drawLegendOfEncodings(svg) {
   var radiusOfCircle = _param.radiusOfCircle;
   var distanceBetweenCircles = 130;
   var eventNameArray = _param.events;
-  var eventsDictionary = _param.eventsDictionary;
-  var tableTop = 45;
+
+  var eventsDictionary;
+    if(window.comparison)
+        eventsDictionary = _param.eventsDictionaryComparison;
+    else
+        eventsDictionary = _param.eventsDictionary;
+  var tableTop = 30;
   var topPadding = _param.topPadding;
   var glyphOPacity = _param.glyphOPacity;
   var colors = _param.colors;
@@ -1518,8 +1854,11 @@ function drawLegendOfEncodings(svg) {
         width: 3 * radiusOfCircle,
         height: radiusOfCircle,
         "fill-opacity": glyphOPacity,
-        fill: function () {
-          return colors[i];
+        fill: function(){
+            if(boolA)
+                return _param.colorA;
+            else if(boolB)
+                return _param.colorB;
         },
       });
     } else if (eventsDictionary[eventNameArray[i]] == "startTrain") {
@@ -1554,7 +1893,11 @@ function drawLegendOfEncodings(svg) {
         ry: 0,
         width: t_width,
         height: t_height,
-        fill: colors[3],
+        // fill: colors[3],
+        fill:"none",
+        stroke: "black",
+        "stroke-width": "1px",
+        "stroke-opacity": glyphOPacity,
         "fill-opacity": glyphOPacity,
         transform:
           "rotate(-45," +
@@ -1576,6 +1919,12 @@ function drawLegendOfEncodings(svg) {
           "font-size": 1.5 * t_height + "px",
           "dominant-baseline": "central",
           "text-anchor": "middle",
+          "stroke": function(){
+            if(boolA)
+                return _param.colorA;
+            else if(boolB)
+                return _param.colorB;
+        },
         })
         .text("X-----");
     } else if (eventsDictionary[eventNameArray[i]] == "deadlock") {
@@ -1588,7 +1937,12 @@ function drawLegendOfEncodings(svg) {
         y: y_Pos,
         width: t_width,
         height: t_height,
-        fill: _param.deadlockShapeFillColor,
+        fill: function(){
+            if(boolA)
+                return _param.colorA;
+            else if(boolB)
+                return _param.colorB;
+        },
         opacity: _param.glyphOPacity,
         stroke: _param.deadlockShapeBoundaryColor,
         "stroke-width": _param.deadlockShapeStrokeWidth,
@@ -1670,7 +2024,9 @@ function drawLegendOfEncodings(svg) {
   });
 
   highlightEventsFunc();
-  // eventLegendGroup.attr("transform", "translate("+(-textEnd +40)+",0)");
+//   eventLegendGroup.attr("transform", "translate("+(-textEnd +40)+",0)");
+  eventLegendGroup.attr("transform", `translate(0,${-rectY+10})`);
+
 }
 function putTrainsinGroups(agentTimelineData) {
   groupDict = {
@@ -1722,6 +2078,8 @@ function sortTrains(sortCriteria, order, entitiesArray, agentTimelineData) {
   return entitiesArray;
 }
 
+
+
 function drawRightColumn(svg, topLegendGroup) {
   var columnRightPadding = 0;
   var paddingRightEnd = 0;
@@ -1760,7 +2118,7 @@ function drawRightColumn(svg, topLegendGroup) {
         "class":"stationLabel stationLabel"+stationId,
         "pointer-events":"bounding-box"
       })
-      .text(sameLengthStationId(stationId))
+      .text(sameLengthStationId(stationId, window.data))
       .on("mouseover", function(d){
           var stationId = +d3.select(this).attr("stationId");
         var trainsArray = window.data["stationsIdDictionary"][stationId]["trains"];
@@ -2061,16 +2419,29 @@ function drawRightColumn(svg, topLegendGroup) {
   });
 }
 
-function drawVisualization() {
-  var agentTimelineData = processData();
+function drawVisualization(boolA, boolB) {
+    var data, submission; //submission is either "A" or "B"
+    if(boolA == true && boolB == false)
+    {
+        data = window.dataA;
+        submission = "A";
+    }    
+    else if(boolA == false && boolB == true)
+    {
+        data = window.dataB;
+        submission = "B";
+    }
+    window.data = data;
+
+  var agentTimelineData = processData(data, submission);
   _param.agentTimelineData = agentTimelineData;
   window.overallStatisticsDict = computeOverallStatistics(agentTimelineData);
   window.perFrameStatisticsArray = computePerFrameStatistics(agentTimelineData);
 
   d3.select("#transitionGraphSvg").remove();
 
-  drawOverallStatistics(overallStatisticsDict);
-  var episodeData = window.data["environmentData"];
+  drawOverallStatistics(overallStatisticsDict, boolA, boolB);
+  var episodeData = data["environmentData"];
   // var episodeLength = episodeData.max_episode_steps;
   var episodeLength = episodeData["episode"].length;
   window.selectedEpisodeLength = episodeLength;
@@ -2086,6 +2457,7 @@ function drawVisualization() {
   d3.select("#frame").text("0");
 
   d3.select("#mainVisualizationGroup").selectAll("*").remove();
+  d3.select("#histogram").remove();
   d3.select("#scrollBar").remove();
   d3.select("#topLegend").remove();
 
@@ -2100,10 +2472,7 @@ function drawVisualization() {
 
   var minHeightOfRow = _param.minHeightOfRow;
 
-  if (window.figureForTeaser) {
-    height = 450;
-    width = 1300;
-  }
+
 
   window.visEndX = width - rightPadding - textEnd;
   window.visStartX = textEnd;
@@ -2118,6 +2487,7 @@ function drawVisualization() {
 //   width = boundingRect.width;
 //   width = 900 * window.zoomFactor;
   width = document.body.clientWidth * 0.7/window.zoomFactor;
+  _param.mainVisualizationSvgWidth = width;
   d3.select("#item4").attr("style", "width:"+(width)+"px;");
   width = width - 10;
   d3.select("#rightColumn").attr("style", "width:"+((document.body.clientWidth * 0.3/window.zoomFactor) - 35)+"px;");
@@ -2127,8 +2497,9 @@ function drawVisualization() {
     .attr("height", height + "px");
   var svg = d3.select("#mainVisualizationGroup");
 
+  d3.select("#regionsOnTimeline").remove();
   d3
-    .select("#mainVisualization")
+    .select("#mainVisualizationGroup")
     .append("g")
     .attr("id", "regionsOnTimeline");
 
@@ -2196,7 +2567,8 @@ function drawVisualization() {
     yscale = d3
       .scaleBand()
       .domain(entitiesArray)
-      .rangeRound([topPadding, computedMinHeightOfTimeline - bottomPadding])
+    //   .rangeRound([topPadding, computedMinHeightOfTimeline - bottomPadding])
+      .rangeRound([topPadding, computedMinHeightOfTimeline + topPadding])
       .padding(5);
     heightOfRow = minHeightOfRow;
   }
@@ -2273,7 +2645,7 @@ function drawVisualization() {
       svg,
       _param.ontrackIcon
     );
-
+    if (yettostartAgents.length > 0) {
     svg.append("rect").attrs({
       x: ttx,
       y: globalYScale(yettostartAgents[0]) - heightOfRow / 2,
@@ -2285,6 +2657,7 @@ function drawVisualization() {
       fill: "red",
       opacity: 0.03,
     });
+    }
   }
   //
   if (yettostartAgents.length > 0) {
@@ -2306,13 +2679,29 @@ function drawVisualization() {
     });
   }
 
-  var yLegendGroup = svg.append("g");
-  for (var i = 0; i < entitiesArray.length; i++) {
+    var alternateBackgroundGroup = svg.append("g");
+    var yLegendGroup = svg.append("g");
+  for (var i = 0; i < entitiesArray.length; i++) 
+  {
+    var index = entitiesArray.indexOf(i);
+    if(index%2==0)
+    {
+        alternateBackgroundGroup.append("rect").attrs({
+            x: textEnd - marginTextBeforeMatrix - 70,
+            y: yscale(i) - heightOfRow/2,
+            width: width - textEnd + marginTextBeforeMatrix + 70,
+            height: heightOfRow,
+            fill: "lightgrey",
+            "opacity": 0.2,
+            "class": "background",
+            "pointer-events":"none"
+        });
+    }
     yLegendGroup
       .append("text")
       .attrs({
         x: function () {
-          return textEnd - marginTextBeforeMatrix;
+          return textEnd - marginTextBeforeMatrix + 5;
         },
         // "x": 0,
         y: yscale(entitiesArray[i]),
@@ -2396,7 +2785,12 @@ function drawVisualization() {
             ry: 0,
             width: spaceBetweenTimesteps,
             height: heightOfRectangle,
-            fill: colors[0],
+            fill: function(){
+                if(boolA)
+                    return _param.colorA;
+                else if(boolB)
+                    return _param.colorB;
+            },
             "fill-opacity": glyphOPacity,
             class: "moved timeLineVisComponent",
             "pointer-events":"none"
@@ -2406,7 +2800,7 @@ function drawVisualization() {
 
       // Junctions
       if (agentTimelineData[i]["junctions"][j] != 0) {
-        var t_width = 2 * radiusOfCircle,
+        var t_width = 1.5 * radiusOfCircle,
           t_height = t_width;
         x_Pos = xscale(j) - t_width / 2;
         y_Pos = yscale(i) - t_height / 2;
@@ -2417,7 +2811,11 @@ function drawVisualization() {
           ry: 0,
           width: t_width,
           height: t_height,
-          fill: colors[3],
+        //   fill: colors[3],
+            fill:"none",
+            stroke: "black",
+            "stroke-width": "1px",
+        "stroke-opacity": glyphOPacity,
           "fill-opacity": glyphOPacity,
           transform:
             "rotate(-45," +
@@ -2453,7 +2851,13 @@ function drawVisualization() {
               class: "malfunction timeLineVisComponent",
               "dominant-baseline": "central",
               "text-anchor": "middle",
-              "pointer-events":"none"
+              "pointer-events":"none",
+              "stroke": function(){
+                if(boolA)
+                    return _param.colorA;
+                else if(boolB)
+                    return _param.colorB;
+            }
             })
             .text("X");
 
@@ -2467,7 +2871,12 @@ function drawVisualization() {
             y1: y_Pos,
             x2: globalXScale(malfunctionEnd),
             y2: y_Pos,
-            stroke: "black",
+            stroke: function(){
+                if(boolA)
+                    return _param.colorA;
+                else if(boolB)
+                    return _param.colorB;
+            },
             "stroke-opacity": glyphOPacity,
             // "stroke-dasharray":"5 5",
             "stroke-width": "1px",
@@ -2589,6 +2998,7 @@ function drawVisualization() {
         x: tickX,
         y: tickY - tickLength - 2,
         "font-size": tickFontSize,
+        "class": "tickLabel",
         "text-anchor": "middle",
         "dominant-baseline": "end",
       })
@@ -2675,14 +3085,14 @@ function drawVisualization() {
       "text-anchor": "middle",
     });
 
-  drawLegendOfEncodings(topLegendGroup);
+  drawLegendOfEncodings(topLegendGroup, boolA, boolB);
   drawRightColumn(svg, topLegendGroup);
-  drawDeadlockVis(svg);
+  drawDeadlockVis(svg, boolA, boolB);
 
   var histogramData = computeHistogramData(
     agentTimelineData,
     window.selectedMetric,
-    10
+    10, window.selectedEpisodeLength
   );
 
   drawEventHistogram(window.selectedMetric, "trains", 10, histogramData, 1);
@@ -2869,7 +3279,8 @@ function drawVisualization() {
   statusBar.call(drag);
   
   statusBar.attr("transform", "translate(" + xscale(0) + ",0)");
-  preparePlayback();
+  
+  preparePlayback(data);
 
   var height = window.svgWidthHeight;
   var width = d3.select("#transitionGraphDiv").node().getBoundingClientRect()
@@ -2885,7 +3296,7 @@ function drawVisualization() {
         // transitionGraphSvg.append("g").attr("id", "transitionGraphGroup");
   // var transitionGraph = document.querySelector("#transitionGraphSvg");
   // svgPanZoom(transitionGraph, { controlIconsEnabled: true });
-  drawRailRegions();
+  drawRailRegions(window.data);
   drawHeatmap();
 }
 

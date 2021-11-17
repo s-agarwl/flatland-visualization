@@ -19,6 +19,8 @@ from flatland.envs.rail_generators import rail_from_manual_specifications_genera
 from flatland.envs.rail_generators import random_rail_generator, complex_rail_generator, sparse_rail_generator
 from flatland.envs.persistence import RailEnvPersister
 
+
+
 def serializeAgents(objectList):
     #print(len(objectList))
     serializedList = []
@@ -338,6 +340,7 @@ def processTrajectoryData(agent_trajectory_dict):
 # path = "../../data/test/"
 # dataPaths = {"RL":"../../data/recording76716-rl/","OR": "../../data/recording76738-or/"}
 # dataPaths = {"RL":"../../data/test_deadlock/"}
+# dataPaths = {"RL": "D:/flatland/data/test"}
 def processData(folder, dataPaths):
     returnDict = {}
     fileKeyArray=[]

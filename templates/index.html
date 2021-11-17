@@ -7,12 +7,15 @@
         <script src="{{ url_for('static', filename='js/d3-selection-multi.v1.min.js') }}"></script>
         <!-- <script src="js/svg-dropdown.js"></script> -->
         <script src="{{ url_for('static', filename='js/visualizationScript.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/comparisonVisualizations.js') }}"></script>
+        
         <script src="{{ url_for('static', filename='js/playback.js') }}"></script>
 
         <script src="{{ url_for('static', filename='/data/data.js') }}"></script>
+        <script src="{{ url_for('static', filename='/data/winnersdata.js') }}"></script>
         <script src="{{ url_for('static', filename='/js/svg-pan-zoom.min.js') }}"></script>
         <!-- <script src="{{ url_for('static', filename='/js/svg-pan-zoom.js') }}"></script> -->
-        <link rel="stylesheet" href="{{ url_for('static', filename='/css/all.min.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
         <script  src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
         <script  src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
@@ -22,6 +25,7 @@
       <!-- <script src="https://code.jquery.com/jquery-1.12.4.js"></script> -->
       <script  src="{{ url_for('static', filename='js/jquery-ui.min.js') }}"></script>
       <script  src="{{ url_for('static', filename='js/selection.js') }}"></script>
+      <script  src="{{ url_for('static', filename='js/node-pie.js') }}"></script>
         <style>
 
         #videoSVG{
@@ -97,8 +101,8 @@
             left: 0;
             bottom: 0;
             width: 100%;
-            height: 35px;
-            padding-top: 10px;
+            /* height: 35px; */
+            padding-top: 0px;
         }
 
         .footer ul {
@@ -151,7 +155,7 @@
             font-weight: bold;
         }
         .statsItem{
-            padding-left:20px;
+            padding-left:15px;
         }
         .frameStatistics{
             font-weight: bold;
@@ -191,12 +195,24 @@
         .btn-sm{
             padding:0px 6px 0px 6px;
         }
+        .grid-container0 {
+            display: grid;
+            margin-left: 10px;
+            grid-template-columns: auto;
+            grid-column: 1 / 4;
+            grid-template-rows: 25px 25px 25px 25px;
+            grid-gap: 0 px;
+            height: 120px;
+            width: 100%;
+            grid-row-gap: 0px;
+            }
 
         .grid-container {
             display: grid;
             grid-template-columns: auto auto (30%);
-            grid-template-rows: 50px 20px auto auto 30px;
+            grid-template-rows: 30px 130px auto auto 20px;
             grid-gap: 5px;
+            grid-row-gap: 2px;
             height: 100vh - 30px;
             width: 100%;
             }
@@ -284,6 +300,70 @@ label{
     cursor:pointer;
 }
 
+/* For screenshots */
+.TrainLabels {
+    font-size:16px;
+}
+.regionIdText{
+    font-size: 13px;
+}
+.stationLabel{
+    font-size: 16px;
+}
+.stationLabelMap{
+    font-size: 13px;
+}
+.viewTitle{
+    font-size: 16px;
+}
+.item1, .item2{
+    font-size: 18px;
+}
+
+.sessionColorDiv{
+    width: 30px;
+    height: 15px;
+    display:inline-block;
+    margin-left: 15px;
+
+}
+
+.x-axis line, .x-axis path { stroke: #fff; }
+
+.visualizeButton{
+    width:75px;
+    padding:0;
+    margin:0;
+    font-size:12px;
+}
+
+#optionSelection {
+  display: grid;                            
+  grid-template-columns: 700px auto;   
+  /*  grid-auto-rows: 50px;                      */
+  /* grid-gap: 10px;                            */
+  /* width: 516px; */
+}
+
+#lineChartDiv {
+    grid-row: 1 / 5;                        
+  grid-column: 2 / 2; 
+  z-index:10;
+  height: 140px;
+}
+
+#lineChartDiv path {
+    /* fill: none; */
+    /* stroke: grey; */
+    stroke-width: 2;
+    /* shape-rendering: crispEdges; */
+}
+#lineChartDiv .axis,  #lineChartDiv line{
+    stroke-width: 1;
+    fill: none;
+}
+
+
   </style>
 
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -338,8 +418,8 @@ label{
                                 
                                 <div class="col-sm-8" >
                                     
-                                            <span class="firstLine">Adventures in <a href="https://flatland.aicrowd.com/intro.html" class="linkInTitle" target="_blank">Flatland</a> : Visual Analysis of Constrained Multi-agent Rail Movement</span><br/>
-                                    <span class="secondLine">(Please fill <b><a href="https://docs.google.com/forms/d/e/1FAIpQLSfandmyOnIcyClKPgSHHTzZGdhNWrKkBd0uQ95JijeF8P-9pw/viewform" target="_blank" >the feedback form</a></b> to help us in research and suggest further improvements.)</span>
+                                            <span class="firstLine">Spatio-temporal Analysis of Multi-agent Scheduling Behaviors on Fixed-track Networks</span><br/>
+                                    <!-- <span class="secondLine">(Please fill <b><a href="https://docs.google.com/forms/d/e/1FAIpQLSfandmyOnIcyClKPgSHHTzZGdhNWrKkBd0uQ95JijeF8P-9pw/viewform" target="_blank" >the feedback form</a></b> to help us in research and suggest further improvements.)</span> -->
 
                                 </div>
                                 <div class="col-sm-2" style="margin-top:4pt">
@@ -352,26 +432,93 @@ label{
                         </div>
                 </div>
             </div>
-            <div class="item1">
-                <span> Select Episode: </span>
-                    <select id="datasetSelector" onchange="datasetChange()">
+            <div class="grid-container0" id="optionSelection">
+                <div>
+                    Load Dataset From <select id="iterationSelector" onchange="iterationDataChanged()">
+                    <option value="first">First Iteration</option>    
+                    <option value="second" selected>Second Iteration</option>    
+                    </select>
+
+                    <!-- <input type="radio" id="firstIteration" name="data" value="firstIteration"  onchange="options()">
+                <label for="firstIteration"> First Iteration Data: 
+                    <div class="firstOptions" style="display:inline-block;">
+                    Select <select id="datasetSelector" ></select>
+                    <button onclick="datasetChange()" class="visualizeButton">Visualize!</button>
+                        
+                </label> -->
+                <!-- </div> -->
+                   
                             
-                          </select> 
-                          <!-- OR 
+                    
+
+                </div>
+                <div id="lineChartDiv">
+
+                </div>
+                <div>
+                    <!-- <input type="radio" id="secondIteration" name="data" value="secondIteration" checked onchange="options()"> -->
+                <!-- <label for="secondIteration"> -->
+                    <!-- <div class="secondOptions" style="display:inline-block;"> -->
+                    <span> Select </span>
+                    <select id="levelSelection" onchange="levelChange()">
+                    </select> 
+                    <span> and </span>
+                    <select id="mapSelection" onchange="mapChange()">
+                    </select> 
+                <!-- </div> -->
+                <!-- </label> -->
+                <div class="secondOptions" style="display:inline-block;">
+                    <button onclick="visualize()" class="visualizeButton">Visualize!</button>
+                </div>
+                </div>
+            
+            
+            <div class="secondOptions">
+               <div class="sessionColorDiv" style="background-color:#0394FC ;"></div> <span> Session A: </span>
+                    <select id="submissionASelection" onchange="submissionAChange()">
+                    </select> 
+                    <div id="OverallStatsA" style="display:inline;">
+                        <span >Percent Done: </span><span id="percentDoneA" class="overallStatistics"></span> 
+                        <span class = "statsItem"> #Trains: </span><span id="totalNumTrainsA" class="overallStatistics"></span> 
+                        <span class = "statsItem"> # (<span class="glyphicon glyphicon-ok "></span>): </span><span class="overallStatistics" id="totalNumTrainsReachedDestinationA"></span>
+                        <span class = "statsItem"> # (<span class = "glyphicon glyphicon-road"></span>): </span><span class="overallStatistics" id="totalNumTrainsInProgressA"></span>
+                        <span class = "statsItem"> # (<span class = "glyphicon glyphicon-pause"></span>): </span><span class="overallStatistics" id="totalNumTrainsYetToRunA"></span>
+                    </div>
+            </div>
+            <div class="secondOptions">
+                <div class="sessionColorDiv" style="background-color:#FC6B03 ;"></div>
+                <span> Session B: </span>
+                    <select id="submissionBSelection" onchange="submissionBChange()">
+                    </select> 
+                    <div id="OverallStatsB" style="display:inline;">
+                        <span >Percent Done: </span><span id="percentDoneB" class="overallStatistics"></span> 
+                        <span class = "statsItem"> #Trains: </span><span id="totalNumTrainsB" class="overallStatistics"></span> 
+                        <span class = "statsItem"> # (<span class="glyphicon glyphicon-ok "></span>): </span><span class="overallStatistics" id="totalNumTrainsReachedDestinationB"></span>
+                        <span class = "statsItem"> # (<span class = "glyphicon glyphicon-road"></span>): </span><span class="overallStatistics" id="totalNumTrainsInProgressB"></span>
+                        <span class = "statsItem"> # (<span class = "glyphicon glyphicon-pause"></span>): </span><span class="overallStatistics" id="totalNumTrainsYetToRunB"></span>
+                    </div>
+                    
+            </div>
+
+            <div>
+                <span class="glyphicon glyphicon-ok "></span>: Trains <b>reached</b> destination
+                <span class = "statsItem"> </span><span class="glyphicon glyphicon-road "></span> : Trains <b>on-tracks</b>
+                <span class = "statsItem"> </span><span class="glyphicon glyphicon-pause "></span> : Trains <b>did not start</b>
+            </div>
+            
+        </div>
+            <!-- <div class="item1">
+                <span> Select Episode: </span>
+                    
+                          OR 
                             <form id = "workingForm" action = "/success" method = "post" enctype="multipart/form-data" style = "display:inline-block;">  
                                 <input id="fileTag" type="file" name="files[]" multiple="true" autocomplete="off" required style = "display:inline-block;font-size:9pt;">
                                 <input type = "submit" value="Visualize" style = "display:inline-block;font-size:9pt;"> 
-                            </form> -->
-            </div>
-            <div class="item2">
-                <div id="OverallStats">
-                    <span >Percentage Done: </span><span id="percentDone" class="overallStatistics"></span> 
-                    <span class = "statsItem"> #Trains: </span><span id="totalNumTrains" class="overallStatistics"></span> 
-                    <span class = "statsItem"> #Trains <b>reached</b> destination (<span class="glyphicon glyphicon-ok "></span>): </span><span class="overallStatistics" id="totalNumTrainsReachedDestination"></span>
-                    <span class = "statsItem"> #Trains <b>on-track </b>(<span class = "glyphicon glyphicon-road"></span>): </span><span class="overallStatistics" id="totalNumTrainsInProgress"></span>
-                    <span class = "statsItem"> #Trains <b>did not start</b> (<span class = "glyphicon glyphicon-pause"></span>): </span><span class="overallStatistics" id="totalNumTrainsYetToRun"></span>
-                </div>
-            </div> 
+                            </form> 
+            </div> -->
+            <!-- <div class="item2">
+                
+            </div>  -->
             <div class="item4" id="item4">
                 <div class="viewTitle">Timeline View</div>
 
@@ -412,7 +559,7 @@ label{
                         <div style="position:absolute;">
                             <!-- <i class="glyphicon glyphicon-resize-full" id="resize" isFullScreen="false"></i> -->
                             <input type="checkbox" id="heatmapCheckbox" name="heatmap" style="margin-left:10px;">
-                            <label for="heatmapCheckbox"> Occupancy Time</label>
+                            <label for="heatmapCheckbox" id="occupancyLabel"> Occupancy Time</label>
                         </div>
                         <a href="#" id="rectangleRegionSelectionButton" class="btn btn-info btn-lg" style="margin-top:50px; position:absolute;color:black; background-color: lightgrey;"
                         title = "Rectangular Selection of Regions">
@@ -442,7 +589,7 @@ label{
                             <!-- <br /> -->
                         </div>
                 </div>
-                <div style="margin-top:5px; text-align: center;">
+                <div style="margin-top:5px; text-align: center;" id="playbackControlsDiv">
                     <label >Step: </label><label id="frame">0</label>
                     
                     <a href="#" class="btn btn-default btn-sm icon-flipped" id="previous">
@@ -475,8 +622,8 @@ label{
                     <form style="margin-left:10px;">
                         <label>Show: </label><input style="margin-left:10px;" type="radio" id="aggregatedRadio" name="graphsRadio" value="aggregatedRadio" checked="checked" onclick="handleRadioClick(this);">
                         <label for="aggregatedRadio">Aggregated Graph</label>
-                        <input type="radio" id="dynamicRadio" name="graphsRadio" value="dynamicRadio" onclick="handleRadioClick(this);">
-                        <label for="dynamicRadio">Animated Graph</label>
+                        <span id="animatedGraphSpan"><input type="radio" id="dynamicRadio" name="graphsRadio" value="dynamicRadio" onclick="handleRadioClick(this);">
+                        <label for="dynamicRadio">Animated Graph</label></span>
                     </form>   
                     <!-- <label id="graphText">The graph shows selected regions as node and movement as edges. Select a region from the map ...</label>     -->
                             <!-- <form id="postFilesForm" method="POST" enctype="multipart/form-data">
@@ -613,8 +760,14 @@ label{
 
 
     <script>
+
+        // For screenshots in the paper
+        _param.tickFontSize = 14;
+
         window.selectedRegions = [];
         window.selectedRegionIdCounter = 1;
+
+        window.firstScreenload=true;
 
         window.areaSelection = "rect"; //rail
         d3.select("#rectangleRegionSelectionButton").on("click", function(){
@@ -645,7 +798,8 @@ label{
             d3.select("#transitionGraphSvg").selectAll("*").remove();
             window.selectedRegions = [];
             window.selectedRegionIdCounter = 1;
-            computeOccupyingCellsByRegions(d3.select("#transitionGraphSvg"));
+            if(!window.comparison)
+                computeOccupyingCellsByRegions(d3.select("#transitionGraphSvg"), window.singleSelectedData);
             //   d3.select("#dynamicGraphGroup").remove();
             appendSampleGraphText();
         })
@@ -712,9 +866,10 @@ window.addEventListener( "load", function () {
 
         window.showHeatmap = true;
         window.currentVerticalPosition = 0;
-        // window.figureForTeaser = true;
-        window.figureForTeaser = false;
+        window.figureForTeaser = true;
+        // window.figureForTeaser = false;
         window.highlightEvents = {"movement": true, "startTrain": true, "endTrain": true, "junction": false, "malfunction": true, "deadlock": true};
+        window.highlightEventsComparison = {"startTrain": true, "endTrain": true, "junction": false, "movementA": true, "movementB": true,  "malfunctionA": true, "malfunctionB": true, "deadlockA": true, "deadlockB":true};
 
         window.maxGameLength = 802;
         window.timeWait = 200;
@@ -726,6 +881,15 @@ window.addEventListener( "load", function () {
             "malfunctions": "# Malfunctions"
 
         }
+
+        window.metric_description = {
+            "movement": "Distance travelled by all trains",
+            "startTimestep": "# Trains that started their journey",
+            "endTimestep": "# Trains that reached destination",
+            "junctions": " # Junctions witnessed by trains",
+            "malfunctions": "# Trains experiencing malfunction"
+        };
+
         window.selectedMetric = "movement";
 
         window.agentIndex_RowidDictionary = {
@@ -867,105 +1031,200 @@ window.addEventListener( "load", function () {
 
             var e = document.getElementById("datasetSelector");
             var episodeKey = e.options[e.selectedIndex].value;
-            if(window.selectedEpisodeKey != episodeKey)
-                loadSpecificGame(episodeKey);
+            // if(window.selectedEpisodeKey != episodeKey)
+                loadSpecificGame(episodeKey,"","first");
             // $("body").css("cursor", "progress");
             
+        }
+        function levelChange()
+        {
+            var e = document.getElementById("levelSelection");
+            var level = e.options[e.selectedIndex].value;
+            window.selectedLevel = level;
+            window.mapwasChanged = true;
+            populateMapDropdown(window.selectedLevel, window.testLevels);
+            syncHighlighting();
+
+        }
+
+        function mapChange()
+        {
+            var e = document.getElementById("mapSelection");
+            var map = e.options[e.selectedIndex].value;
+            window.selectedMap = map;
+            window.mapwasChanged = true;
+        }
+
+        function submissionAChange()
+        {
+            var e = document.getElementById("submissionASelection");
+            var schedulingA = e.options[e.selectedIndex].value;
+            window.schedulingA = schedulingA;
+            if(schedulingA == "" || schedulingA != window.selectedSessionA)
+                d3.select("#OverallStatsA").style("display","none");
+            else
+            {
+                d3.select("#OverallStatsA").style("display","inline");
+                d3.select("#totalNumTrainsA").text("");
+                d3.select("#totalNumTrainsReachedDestinationA").text("");
+                d3.select("#totalNumTrainsInProgressA").text("");
+                d3.select("#totalNumTrainsYetToRunA").text("");
+            }
+            syncHighlighting();
+           
+        }
+        function submissionBChange()
+        {
+            var e = document.getElementById("submissionBSelection");
+            var schedulingB = e.options[e.selectedIndex].value;
+            window.schedulingB = schedulingB;
+            if(schedulingB == ""|| schedulingB != window.selectedSessionB)
+                d3.select("#OverallStatsB").style("display","none");
+            else
+            {
+                d3.select("#OverallStatsB").style("display","inline");
+                d3.select("#totalNumTrainsB").text("");
+                d3.select("#totalNumTrainsReachedDestinationB").text("");
+                d3.select("#totalNumTrainsInProgressB").text("");
+                d3.select("#totalNumTrainsYetToRunB").text("");
+            }
+            syncHighlighting();
+        }
+
+        function loadSpecificVisualization()
+        {
+            
+            if (window.schedulingA != "" && window.schedulingB == "")
+            {
+                var episodeKeyA = schedulingA + "-Test_"+window.selectedLevel+"_Level_"+window.selectedMap;
+                window.selectedScheduling = "A";
+                window.selectedSessionA = schedulingA;
+                _param.actualPathLengthBarColor = _param.colorA;
+                // if(window.selectedEpisodeKeyA != episodeKeyA)
+                    loadSpecificGame(episodeKeyA, "");
+            }
+            else if(window.schedulingA == "" && window.schedulingB != "")
+            {
+                var episodeKeyB = schedulingB + "-Test_"+window.selectedLevel+"_Level_"+window.selectedMap;
+                window.selectedScheduling = "B";
+                window.selectedSessionB = schedulingB;
+                _param.actualPathLengthBarColor = _param.colorB;
+
+
+                // if(window.selectedEpisodeKeyB != episodeKeyB)
+                    loadSpecificGame("", episodeKeyB);
+            }
+            else if (window.schedulingA != "" && window.schedulingB != "")
+            {
+                var e = document.getElementById("mapSelection");
+                var map = e.options[e.selectedIndex].value;
+                window.selectedMap = map;
+
+                var episodeKeyA = schedulingA + "-Test_"+window.selectedLevel+"_Level_"+window.selectedMap;
+                var episodeKeyB = schedulingB + "-Test_"+window.selectedLevel+"_Level_"+window.selectedMap;
+                window.selectedScheduling = "Both";
+                window.selectedSessionA = schedulingA;
+                window.selectedSessionB = schedulingB;
+
+                loadSpecificGame(episodeKeyA, episodeKeyB);
+                
+
+            }
         }
 
         window.fileNamesArray=[];
         
-        function drawOverviewMetric(svg, xscale2, yscale2, overviewStatsPerGame, isTeamGame, metricName, heightOfCell)
-            {
-                d3.select("#metricGroup").selectAll("*").remove();
-                var metricGroup =  d3.select("#metricGroup");
+        // function drawOverviewMetric(svg, xscale2, yscale2, overviewStatsPerGame, isTeamGame, metricName, heightOfCell)
+        //     {
+        //         d3.select("#metricGroup").selectAll("*").remove();
+        //         var metricGroup =  d3.select("#metricGroup");
 
-                window.selectedMetric = metricName;
-                d3.selectAll(".selectedMetric").text(window.metric_labelDictionary[window.selectedMetric]);
+        //         window.selectedMetric = metricName;
+        //         d3.selectAll(".selectedMetric").text(window.metric_labelDictionary[window.selectedMetric]);
 
-                var dataArray=[];
-                var min = 99999999, max = -1;
-                for(var i=0; i< overviewStatsPerGame.length; i++)
-                {
-                    var temp = [];
+        //         var dataArray=[];
+        //         var min = 99999999, max = -1;
+        //         for(var i=0; i< overviewStatsPerGame.length; i++)
+        //         {
+        //             var temp = [];
                    
                     
-                    if(isTeam)
-                    {
-                        temp.push(overviewStatsPerGame[i]["e1"][metricName] + overviewStatsPerGame[i]["e2"][metricName]);
-                        temp.push(overviewStatsPerGame[i]["e3"][metricName] + overviewStatsPerGame[i]["e4"][metricName]);
-                    }
-                    else
-                    {
-                        temp.push(overviewStatsPerGame[i]["e1"][metricName]);
-                        temp.push(overviewStatsPerGame[i]["e2"][metricName]);
-                        temp.push(overviewStatsPerGame[i]["e3"][metricName]);
-                        temp.push(overviewStatsPerGame[i]["e4"][metricName]);
-                    }
-                    var tempMin = d3.min(temp);
-                    var tempMax = d3.max(temp);
+        //             if(isTeam)
+        //             {
+        //                 temp.push(overviewStatsPerGame[i]["e1"][metricName] + overviewStatsPerGame[i]["e2"][metricName]);
+        //                 temp.push(overviewStatsPerGame[i]["e3"][metricName] + overviewStatsPerGame[i]["e4"][metricName]);
+        //             }
+        //             else
+        //             {
+        //                 temp.push(overviewStatsPerGame[i]["e1"][metricName]);
+        //                 temp.push(overviewStatsPerGame[i]["e2"][metricName]);
+        //                 temp.push(overviewStatsPerGame[i]["e3"][metricName]);
+        //                 temp.push(overviewStatsPerGame[i]["e4"][metricName]);
+        //             }
+        //             var tempMin = d3.min(temp);
+        //             var tempMax = d3.max(temp);
 
-                    if(tempMin < min) min = tempMin;
-                    if(tempMax > max) max = tempMax;
-                    dataArray.push(temp);
-                }
+        //             if(tempMin < min) min = tempMin;
+        //             if(tempMax > max) max = tempMax;
+        //             dataArray.push(temp);
+        //         }
             
-                var barHeightScale = d3.scaleLinear().domain([0, max]).range([0, heightOfCell - 4]);
-                for(var i=0; i< dataArray.length; i++)
-                {
-                    var svgGroup = metricGroup.append("g").attrs({
-                        "gameIndex": i,
-                        "cursor": "pointer"
-                    });
+        //         var barHeightScale = d3.scaleLinear().domain([0, max]).range([0, heightOfCell - 4]);
+        //         for(var i=0; i< dataArray.length; i++)
+        //         {
+        //             var svgGroup = metricGroup.append("g").attrs({
+        //                 "gameIndex": i,
+        //                 "cursor": "pointer"
+        //             });
 
-                    for(var j=0; j< dataArray[i].length; j++)
-                    {
-                        var reductionInBarWidth = 5;
+        //             for(var j=0; j< dataArray[i].length; j++)
+        //             {
+        //                 var reductionInBarWidth = 5;
 
-                         // border of bars
-                         svgGroup.append("rect").attrs({
-                            "x": xscale2(i) + reductionInBarWidth,
-                            "y": yscale2(j+"-"),
-                            "height":heightOfCell,
-                            "width": heightOfCell - 2*reductionInBarWidth,
-                            "fill": "white",
-                            "stroke": "black",
-                            "stroke-width":"2px"
-                        });
+        //                  // border of bars
+        //                  svgGroup.append("rect").attrs({
+        //                     "x": xscale2(i) + reductionInBarWidth,
+        //                     "y": yscale2(j+"-"),
+        //                     "height":heightOfCell,
+        //                     "width": heightOfCell - 2*reductionInBarWidth,
+        //                     "fill": "white",
+        //                     "stroke": "black",
+        //                     "stroke-width":"2px"
+        //                 });
                         
-                        svgGroup.append("rect").attrs({
-                            "x": xscale2(i) + reductionInBarWidth + 1,
-                            "y": yscale2(j+"-") + heightOfCell - barHeightScale(dataArray[i][j]) - 1,
-                            "width":heightOfCell - 2*reductionInBarWidth - 2,
-                            "height": barHeightScale(dataArray[i][j]),
-                            "fill": _param.histogramBarColor,
-                            "stroke": _param.histogramBarColor
-                        }).append("title").text(dataArray[i][j]);
-                        // metricGroup.append("rect").attrs({
-                        //     "x": xscale2(i) + 1,
-                        //     "y": yscale2(j+"-"),
-                        //     "height":heightOfCell,
-                        //     "width": barHeightScale(dataArray[i][j]) - 2,
-                        //     "fill": "grey"
-                        // });
+        //                 svgGroup.append("rect").attrs({
+        //                     "x": xscale2(i) + reductionInBarWidth + 1,
+        //                     "y": yscale2(j+"-") + heightOfCell - barHeightScale(dataArray[i][j]) - 1,
+        //                     "width":heightOfCell - 2*reductionInBarWidth - 2,
+        //                     "height": barHeightScale(dataArray[i][j]),
+        //                     "fill": _param.histogramBarColor,
+        //                     "stroke": _param.histogramBarColor
+        //                 }).append("title").text(dataArray[i][j]);
+        //                 // metricGroup.append("rect").attrs({
+        //                 //     "x": xscale2(i) + 1,
+        //                 //     "y": yscale2(j+"-"),
+        //                 //     "height":heightOfCell,
+        //                 //     "width": barHeightScale(dataArray[i][j]) - 2,
+        //                 //     "fill": "grey"
+        //                 // });
 
                        
-                        svgGroup.on("click", function(){
-                            var gameIndex = d3.select(this).attr("gameIndex");
-                            loadGame(gameIndex);
-                        })
-                        svgGroup.on("mousemove", function(){
-                            var gameIndex = d3.select(this).attr("gameIndex");
-                            d3.select("#highlightRectid"+gameIndex).classed("highlighted", true).classed("nothighlighted", false);
-                        });
-                        svgGroup.on("mouseout", function(){
-                            var gameIndex = d3.select(this).attr("gameIndex");
-                            if(d3.select("#highlightRectid"+gameIndex).attr("selected") == "false")
-                                d3.select("#highlightRectid"+gameIndex).classed("highlighted", false).classed("nothighlighted", true);
-                        });
-                    }
-                }
-            }
+        //                 svgGroup.on("click", function(){
+        //                     var gameIndex = d3.select(this).attr("gameIndex");
+        //                     loadGame(gameIndex);
+        //                 })
+        //                 svgGroup.on("mousemove", function(){
+        //                     var gameIndex = d3.select(this).attr("gameIndex");
+        //                     d3.select("#highlightRectid"+gameIndex).classed("highlighted", true).classed("nothighlighted", false);
+        //                 });
+        //                 svgGroup.on("mouseout", function(){
+        //                     var gameIndex = d3.select(this).attr("gameIndex");
+        //                     if(d3.select("#highlightRectid"+gameIndex).attr("selected") == "false")
+        //                         d3.select("#highlightRectid"+gameIndex).classed("highlighted", false).classed("nothighlighted", true);
+        //                 });
+        //             }
+        //         }
+        //     }
 
         function loadGame(gameIndex)
         {
@@ -997,7 +1256,7 @@ window.addEventListener( "load", function () {
        
 
         
-        function initialize(uploadedLogs, logData)
+        function initializeFirst(uploadedLogs, logData)
         {
             var dropdown = d3.select("#datasetSelector");
             window.selectedEpisodeKey = -1;
@@ -1011,6 +1270,74 @@ window.addEventListener( "load", function () {
             }
             else
             {
+                window.testLevelsFirst.sort(function(a,b){
+                    atechParts = a.split("-");
+                    btechParts = b.split("-");
+                    if(atechParts[0] == btechParts[0])
+                    {
+                        aParts = a.split("_");
+                        bParts = b.split("_");
+                        aInt = parseInt(aParts[1]+aParts[3]);
+                        bInt = parseInt(bParts[1]+bParts[3]);
+                        return aInt-bInt;
+                    }
+                    else
+                    {
+                        if(atechParts[0] == "RL")
+                            return -1;
+                        else
+                            return 1
+                    }
+                })
+                // window.selectedEpisodeKey = "RL-Test_13_Level_1";
+                window.selectedEpisodeKey = -1;
+            }
+
+            
+            for(var episodekey in window.testLevelsFirst)
+            {
+                var text = window.testLevelsFirst[episodekey].replace("Level", "Map").replace("Test", "Level");
+                if(window.selectedEpisodeKey == -1)
+                {
+                    window.selectedEpisodeKey = window.testLevelsFirst[episodekey];
+                    dropdown.append("option").attr("selected", "").attr("value", window.testLevelsFirst[episodekey]).text(text);
+                }
+                else if(window.selectedEpisodeKey === window.testLevelsFirst[episodekey])
+                    dropdown.append("option").attr("selected", "").attr("value", window.testLevelsFirst[episodekey]).text(text);
+                else
+                    dropdown.append("option").attr("value", window.testLevelsFirst[episodekey]).text(text);
+
+            }
+            
+            // loadSpecificGame(window.selectedEpisodeKey)
+        }
+
+        function initialize(uploadedLogs, logData)
+        {
+            var dropdown = d3.select("#levelSelection");
+            dropdown.selectAll("*").remove();
+
+            window.selectedEpisodeKey = -1;
+            var dataset = document.getElementById("iterationSelector").value;
+
+            if(uploadedLogs == true)
+            {
+                window.jsonLogData = JSON.parse(JSON.parse(logData));
+                window.testLevels = jsonLogData['testLevels'];
+                $("#levelSelection").empty();
+                window.selectedEpisodeKey = -1;
+            }
+            else
+            {
+                if(dataset == "first")
+                {
+                    window.testLevels = window.testLevelsFirst;
+                }
+                else if(dataset == "second")
+                {
+                    window.testLevels = window.testLevelsSecond;
+
+                }
                 window.testLevels.sort(function(a,b){
                     atechParts = a.split("-");
                     btechParts = b.split("-");
@@ -1030,27 +1357,109 @@ window.addEventListener( "load", function () {
                             return 1
                     }
                 })
-                window.selectedEpisodeKey = "RL-Test_11_Level_0";
-            }
 
-            
-            for(var episodekey in window.testLevels)
+
+            }
+           
+            filename = "";
+            folder = ""
+            if(dataset == "first")
+            {    
+                filename = "./static/data/environments_first.json";
+                window.selectedLevel = "13";
+                window.selectedMap = "1";
+                window.schedulingA="OR";
+                window.schedulingB="RL";
+                folder = "levelsData";
+            }
+            else if(dataset=="second")
             {
-                if(window.selectedEpisodeKey == -1)
-                {
-                    window.selectedEpisodeKey = window.testLevels[episodekey];
-                    dropdown.append("option").attr("selected", "").attr("value", window.testLevels[episodekey]).text(window.testLevels[episodekey]);
-                }
-                else if(window.selectedEpisodeKey === window.testLevels[episodekey])
-                    dropdown.append("option").attr("selected", "").attr("value", window.testLevels[episodekey]).text(window.testLevels[episodekey]);
-                else
-                    dropdown.append("option").attr("value", window.testLevels[episodekey]).text(window.testLevels[episodekey]);
-
+                filename = "./static/data/environments.json";
+                window.selectedLevel = "11";
+                window.selectedMap = "1";
+                window.schedulingA="RL_marmot";
+                window.schedulingB="";
+                folder = "winnersData";
             }
+            drawStatisticsChart(folder);
             
-            loadSpecificGame(window.selectedEpisodeKey)
+            window.mapwasChanged = false;
+            
+            
+                d3.json(filename, function(jsonData){
+                    window.testLevels = jsonData;
+                    for(var levelNum in window.testLevels)
+                    {
+                        if(window.selectedLevel == -1)
+                        {
+                            window.selectedLevel = levelNum;
+                            dropdown.append("option").attr("selected", "").attr("value", levelNum).text(window.testLevels[levelNum]["level_name"]);
+                        }
+                        else if(window.selectedLevel === levelNum)
+                            dropdown.append("option").attr("selected", "").attr("value", levelNum).text(window.testLevels[levelNum]["level_name"]);
+
+                        else
+                            dropdown.append("option").attr("value", levelNum).text(window.testLevels[levelNum]["level_name"]);
+                    }
+
+                    populateMapDropdown(window.selectedLevel, window.testLevels);
+                    populateSchedulingTechniquesDropdown(window.testLevels);
+                    
+                    // loadSpecificGame(window.selectedEpisodeKey)
+                    if(window.firstScreenload)
+                        loadSpecificVisualization();
+
+                });
+            
+            
         }
 
+        function populateMapDropdown(selectedLevel, data)
+        {
+            mapsInSelectedLevel = data[selectedLevel]["maps"];
+            
+            var dropdown = d3.select("#mapSelection");
+            dropdown.selectAll("*").remove();
+            for(var mapNum in mapsInSelectedLevel)
+            {
+                if(window.selectedMap == -1)
+                {
+                    window.selectedMap = mapNum;
+                    dropdown.append("option").attr("selected", "").attr("value", mapNum).text(window.testLevels[selectedLevel]["maps"][mapNum]["map_name"]);
+                }
+                else if(window.selectedMap === mapNum)
+                    dropdown.append("option").attr("selected", "").attr("value", mapNum).text(window.testLevels[selectedLevel]["maps"][mapNum]["map_name"]);
+
+                else
+                    dropdown.append("option").attr("value", mapNum).text(window.testLevels[selectedLevel]["maps"][mapNum]["map_name"]);
+            }
+        }
+
+        function populateSchedulingTechniquesDropdown(data)
+        {
+            techniques = data[window.selectedLevel]["maps"][window.selectedMap]["techniques"];
+            var dropdownA = d3.select("#submissionASelection");
+            var dropdownB = d3.select("#submissionBSelection");
+            dropdownA.selectAll("*").remove();
+            dropdownB.selectAll("*").remove();
+
+            dropdownA.append("option").attr("value", "").text("");
+            dropdownB.append("option").attr("value", "").text("");
+
+            for(var i in techniques)
+            {
+                technique = techniques[i];
+                if(window.schedulingA == technique)
+                    dropdownA.append("option").attr("selected", "").attr("value", technique).text(technique);
+                else
+                dropdownA.append("option").attr("value", technique).text(technique);
+
+                if(window.schedulingB == technique)
+                    dropdownB.append("option").attr("selected","").attr("value", technique).text(technique);
+                else
+                    dropdownB.append("option").attr("value", technique).text(technique);
+            }
+        }
 
         window.onload = function() 
         {
@@ -1069,9 +1478,28 @@ window.addEventListener( "load", function () {
                 var radios = document.querySelectorAll('input[name=gameMetric]:checked');
                 var value = radios.length>0? radios[0].value: null;
                 window.selectedMetric = value;
-                var team1Data = computeHistogramData(_param.agentTimelineData, value, 10);
                 var root1 = d3.select("#histogram");
-                drawEventHistogram(value, "trains", 10, team1Data, 1, root1);
+                if(window.comparison == false)
+                {
+                    var agentTimelineData = _param.agentTimelineData;
+                    // switch(window.selectedScheduling)
+                    // {
+                    //     case "A": agentTimelineData = _param.agentTimelineDataA;
+                    //         break;
+                    //     case "B": agentTimelineData = _param.agentTimelineDataB;
+                    //         break;
+                    // }
+                    var team1Data = computeHistogramData(agentTimelineData, value, 10, window.selectedEpisodeLength);
+                    
+                    drawEventHistogram(value, "trains", 10, team1Data, 1, root1);
+                }
+                else
+                {
+                    var histogramDataA = computeHistogramData(_param.agentTimelineDataA,window.selectedMetric,10, window.selectedEpisodeLengthA);
+                    var histogramDataB = computeHistogramData(_param.agentTimelineDataB, window.selectedMetric,    10, window.selectedEpisodeLengthB);
+                
+                    drawEventHistogramForBoth(window.selectedMetric, "trains", 10, histogramDataA, histogramDataB, 1, root1);
+                }
 
             });
 
@@ -1097,6 +1525,8 @@ window.addEventListener( "load", function () {
             // preprocessData();
 
             initialize();
+            
+            // initializeFirst();
 
             d3.select("#heatmapCheckbox").on("click", function(){
                 if(document.getElementById("heatmapCheckbox").checked)
@@ -1114,38 +1544,539 @@ window.addEventListener( "load", function () {
 
         };
 
-        function loadSpecificGame(episodekey)
+        function drawStatisticsChart(folder)
         {
-            // window.pommermanData = {"blob": window.gamesDataArray[gameIndex]};
-            // drawVisualization();
-            window.selectedEpisodeKey = episodekey;
+            d3.json("./static/data/"+folder+"/summaryStatistics.json", function(data)
+            {
+
+                // Compute Average data
+                var parsedData = [];
+                
+
+                for(var technique in data)
+                {
+                    
+
+                    for(var level in data[technique])
+                    {
+                        var temp = {"technique":technique, "level":parseInt(level), "averagePercentage":-1, "mapValues":[]};
+                        var sum = 0;
+                        var count = 0;
+                        for(var map in data[technique][level])
+                        {
+                            sum+= data[technique][level][map]["percentageDone"];
+                            count++;
+                            temp2 = {};
+                            temp2[map] = data[technique][level][map]["percentageDone"];
+                            temp["mapValues"].push(temp2);
+                        }
+                        var average = (sum*1.0)/count;
+                        temp["averagePercentage"] = average;
+                        parsedData.push(temp);
+                    }
+                }
+
+
+                // console.log(parsedData);
+                // Set the dimensions of the canvas / graph
+                var margin = {top: 5, right: 100, bottom: 17, left: 40},
+                    width = 600 - margin.left - margin.right,
+                    height = 150 - margin.top - margin.bottom;
+
+                // Parse the date / time
+                // var parseDate = d3.time.format("%b %Y").parse;
+
+                // Set the ranges
+                var x = d3.scaleLinear().range([0, width]);
+                var y = d3.scaleLinear().range([height, 0]);
+
+                // Define the axes
+                var xAxis = d3.axisBottom(x).ticks(20);
+
+                var yAxis = d3.axisLeft(y).ticks(5);
+
+                // Define the line
+                var priceline = d3.line()	
+                    .x(function(d) { return x(d.level); })
+                    .y(function(d) { return y(d.averagePercentage); });
+                
+                var rangePath = d3.line()	
+                    .x(function(d) { return d[0]; })
+                    .y(function(d) { return d[1]; });
+                // Adds the svg canvas
+                var svg = d3.select("#lineChartDiv")
+                    .append("svg").attr("id", "statisticsChart")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                        .attr("transform", 
+                            "translate(" + margin.left + "," + margin.top + ")");
+
+                // Get the data
+                
+                parsedData.forEach(function(d) {
+                        d.level = d.level;
+                        d.averagePercentage = +d.averagePercentage;
+                    });
+                svg.append("text").attrs({
+                    "x": -10,
+                    "y": 30,
+                    "text-anchor": "middle",
+                    "transform": "translate (10,"+height/2+") rotate(-90) translate(10, -"+height/2+")"
+                }).text("Percent Done");
+
+                svg.append("text").attrs({
+                    "x": width + margin.left - 5,
+                    "y": height+margin.top + margin.bottom/2,
+                    "text-anchor": "middle",
+                    // "transform": "translate (10,"+height/2+") rotate(-90) translate(10, -"+height/2+")"
+                }).text("Levels");
+
+                // Scale the range of the data
+                // x.domain(d3.extent(data, function(d) { return d.level; }));
+                // y.domain([0, d3.max(data, function(d) { return d.averagePercentage; })]);
+
+                x.domain([0,20]);
+                y.domain([0,100]);
+
+                // Nest the entries by symbol
+                var dataNest = d3.nest()
+                    .key(function(d) {return d.technique;})
+                    .entries(parsedData);
+
+                var color = d3.scaleOrdinal(d3.schemeCategory10); // set the colour scale
+
+                // Loop through each symbol / key
+                dataNest.forEach(function(d) {
+                    var techGroup = svg.append("g").attr("id", d.key).attr("class", d.key + "schedulingGroup");
+                    
+                    var pointsShadedRegion = [];
+                    var tempReversePoints = [];
+
+                    
+
+                    d.values.forEach(function(levels){
+                        var level = levels.level;
+                        var max=-1, min = 9999;
+                        levels.mapValues.forEach(function(maps){
+                            var key = Object.keys(maps)[0];
+                            var percent = maps[key];
+                            if(max < percent)
+                                max = percent;
+                            if(min > percent)
+                                min = percent;
+                        });
+                        var point = [x(level), y(max)];
+                        pointsShadedRegion.push(point);
+                        tempReversePoints.push([x(level), y(min)]);
+                        
+                    });
+
+                    for(var i=tempReversePoints.length-1; i>=0; i--)
+                    {
+                        pointsShadedRegion.push(tempReversePoints[i]);
+                    }                  
+
+                    techGroup.append("path")
+                        .attr("class", function(){
+                            return "statsAverageRange "+ d.key;})
+                        .attrs({
+                            "d": rangePath(pointsShadedRegion),
+                            "fill-opacity":0.1,
+                            "fill": "grey",
+                            "stroke-width":0
+                        });
+                    
+                    techGroup.append("path")
+                        .attr("class", function(){
+                            return "statsAverageLine "+ d.key;})
+                        // .style("stroke", function() { // Add dynamically
+                        //     return d.color = "grey"; })
+                        .attr("d", priceline(d.values));
+                    
+                    techGroup.append("text")
+                        .text(d.key)
+                        .attrs({
+                            x: x(20) + 10,
+                            y: y(d.values[d.values.length -1].averagePercentage)+4,
+                            "font-size": "12px",
+                            "stroke": "1px solid black",
+                            "id": "series"+d.key,
+                            "class": "seriesLabels"
+                        });
+                    d.values.forEach(function(levels){
+                        var level = levels.level;
+                        levels.mapValues.forEach(function(maps){
+                            var key = Object.keys(maps)[0];
+                            var percent = maps[key];
+                            techGroup.append("circle")
+                                .attrs({
+                                    group: d.key,
+                                    level: level,
+                                    map: key,
+                                    percent: percent,
+                                    cx: x(level),
+                                    cy: y(percent),
+                                    r: "3px",
+                                    class: "statsAverageCircle " + d.key + " statsCircle"+d.key+"level"+level,
+                                    id: "statsCircle"+d.key+"level"+level+"map"+key,
+                                    cursor: "pointer"
+                                }).on("mouseover", handleMouseOver)
+                                .on("mouseout", handleMouseOut)
+                                .on("click",handleClick)
+                                .append("title").text(function(){
+                                    // obj = d3.select(this);
+                                    return d.key + " - " + "Level "+ level + " - Map "+key+" : "+ percent+"%";
+                                });
+                        });                        
+                    });
+
+
+                });
+
+                // Create Event Handlers for mouse
+            function handleMouseOver(d, i) {  // Add interactivity
+
+                // Use D3 to select element, change color and size
+                d3.select(this).attrs({
+                    // fill: "orange",
+                    r: "5px"
+                });
+                
+            }
+
+            function handleMouseOut(d, i) {
+                // Use D3 to select element, change color back to normal
+                d3.select(this).attrs({
+                // fill: "black",
+                r: "3px"
+                });
+
+                var level = d3.select(this).attr("level");
+                var map = d3.select(this).attr("map");
+                var scheduling = d3.select(this).attr("group");
+                if(window.selectedLevel == level && window.selectedMap == map && (window.schedulingA == scheduling || window.schedulingB))
+                {
+                    d3.select("#statsCircle"+scheduling+"level"+window.selectedLevel+"map"+window.selectedMap).attrs({
+                    "r": "5px",
+                    "fill":color,
+                    "fill-opacity":0.3,
+                    "stroke-opacity": 0.7
+                    })
+                }
+            }
+
+            function handleClick(d,i)
+            {
+                var level = d3.select(this).attr("level");
+                var map = d3.select(this).attr("map");
+                var scheduling = d3.select(this).attr("group");
+                selectElement('levelSelection', level);
+                selectElement('mapSelection', map);
+                window.selectedLevel = level;
+                window.selectedMap = map;
+
+
+                // if((scheduling == window.schedulingA && window.schedulingB == "") || (scheduling == window.schedulingB &&window.schedulingA == ""))
+                // {
+                    
+                   
+                    loadSpecificVisualization();
+                    syncHighlighting();
+                // }
+                // if(window.schedulingA !="" && window.schedulingB != "")
+                // {
+
+                // }
+            }
+            
+
+            function selectElement(id, valueToSelect) {    
+                let element = document.getElementById(id);
+                element.value = valueToSelect;
+            }
+
+                // Add the X Axis
+                svg.append("g")
+                    .attr("class", "x axis")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(xAxis);
+
+                // Add the Y Axis
+                svg.append("g")
+                    .attr("class", "y axis")
+                    .call(yAxis);
+
+                syncHighlighting();
+            });
+        }
+
+        function syncHighlighting()
+        {
+            var dataset = document.getElementById("iterationSelector").value;
+            // var groups = d3.selectAll(".schedulingGroup");
+            dehighlightStats();
+
+            var anySchedulingSelected = false;
+
+            if(dataset == "second")
+            {   
+                if(window.schedulingA !="")
+                {
+                    anySchedulingSelected = true;
+                    var group = d3.select("#"+window.schedulingA);
+                    highlightStats(group, window.schedulingA, _param.colorA);
+                    
+                }
+
+                if(window.schedulingB != "")
+                {
+                    anySchedulingSelected = true;
+
+                    var group = d3.select("#"+window.schedulingB);
+                    highlightStats(group, window.schedulingB, _param.colorB);
+                }
+                
+            }
+
+            if(anySchedulingSelected == false)
+            {
+               defaultStats();
+
+            }
+        }
+
+        function dehighlightStats()
+        {
+            d3.selectAll(".statsAverageCircle").attrs({
+                "stroke-opacity": 0,
+                "stroke": "grey",
+                "color": "grey",
+                "fill-opacity": 0.01,
+                "z-index": 0,
+                "r":"3px"
+            })
+            d3.selectAll(".statsAverageLine").attrs({
+                "stroke-opacity":0.2,
+                "stroke": "grey",
+                "color":"grey",
+                "fill":"none",
+                "z-index": 0
+            })
+            d3.selectAll(".statsAverageRange").attrs({
+                "fill-opacity":0,
+                "fill": "grey",
+                "stroke-width":0
+            });
+            d3.selectAll(".seriesLabels").attrs({
+                "r":"3px",
+                "opacity": 0.3,
+                "stroke": "1px solid black"
+            });
+        }
+
+        function defaultStats()
+        {
+            d3.selectAll(".statsAverageCircle").attrs({
+                "stroke-opacity": 0,
+                "stroke": "grey",
+                "color": "grey",
+                "fill-opacity": 0.2,
+                "z-index": 1,
+                "r":"3px"
+            })
+            d3.selectAll(".statsAverageLine").attrs({
+                "stroke-opacity":0.8,
+                "stroke": "grey",
+                "color":"grey",
+                "fill":"none",
+                "z-index": 1
+            })
+            d3.selectAll(".statsAverageRange").attrs({
+                "fill-opacity":0.05,
+                "fill": "grey",
+                "stroke-width":0
+            });
+            d3.selectAll(".seriesLabels").attrs({
+                "opacity": 0.3,
+                "r":"3px",
+                "stroke": "1px solid black"
+            });
+        }
+
+        function highlightStats(selection, scheduling, color)
+        {
+            selection.selectAll(".statsAverageCircle").attrs({
+                "stroke": color,
+                "z-index": 10,
+                "fill":color,
+                "fill-opacity":0.1,
+                "stroke-opacity": 0
+
+            })
+            selection.selectAll(".statsAverageLine").attrs({
+                "stroke": color,
+                "fill":"none",
+                "stroke-opacity":0.9,
+                "z-index": 9
+            })
+
+            selection.selectAll(".statsAverageRange").attrs({
+                "fill-opacity":0.1,
+                "fill": color,
+                "stroke-width":0
+            });
+            d3.select("#series"+scheduling).attrs({
+                "opacity": 1,
+                "stroke": color
+            });
+            // window.selectedLevel; window.selectedMap
+            d3.selectAll(".statsCircle"+scheduling+"level"+window.selectedLevel).attrs({
+                "r": "4px",
+                "fill-opacity":0.2,
+                "stroke-opacity": 0
+            });
+            d3.select("#statsCircle"+scheduling+"level"+window.selectedLevel+"map"+window.selectedMap).attrs({
+                "r": "5px",
+                "fill":color,
+                "fill-opacity":0.3,
+                "stroke-opacity": 0.7
+            })
+            // console.log("#statsCircle"+scheduling+"level"+window.selectedLevel+"map"+window.selectedMap);
+        }
+
+        function iterationDataChanged()
+        {
+            window.firstScreenload = false;
+            initialize();
+            syncHighlighting()
+        }
+
+        function visualize()
+        {
+            window.firstScreenload = false;
+            loadSpecificVisualization();
+        }
+
+        function loadSpecificGame(episodekeyA, episodekeyB, iteration)
+        {
+            // options();
+            var dataset = document.getElementById("iterationSelector").value;
+            var dataFolder = "";
+            switch(dataset){
+                case "first": dataFolder = "levelsData/";
+                        break;
+                case "second": dataFolder = "winnersData/";
+                    break;
+            }
+            d3.select("body").style("cursor","wait");
+            if( episodekeyA !="" && episodekeyB=="")
+            {
+                window.selectedEpisodeKeyA = episodekeyA;
+                window.selectedEpisodeKeyB = "";
+                window.comparison = false;
+                filename = "./static/data/"+dataFolder+episodekeyA+".json"
+                
+            
+                d3.json(filename, function(jsonData){
+                    window.dataA = jsonData;
+                    window.grid =  window.dataA["environmentData"]["grid"];
+                    window.singleSelectedData = window.dataA;
+                    window.selectedEpisodeLengthA = window.dataA['environmentData']['episode'].length;
+                    drawVisualization(true, false);
+                    d3.select("#OverallStatsA").style("display","inline");
+                    window.mapwasChanged = false;
+                    d3.select('body').style("cursor","default");
+                });
+            }
+            else if (episodekeyA=="" && episodekeyB != "")
+            {
+                window.selectedEpisodeKeyB = episodekeyB;
+                window.selectedEpisodeKeyA = "";
+                window.comparison = false;
+                filename = "./static/data/"+dataFolder+episodekeyB+".json"
+            
+                d3.json(filename, function(jsonData){
+                    window.dataB = jsonData;
+                    window.grid =  window.dataB["environmentData"]["grid"];
+                    window.singleSelectedData = window.dataB;
+
+                    window.selectedEpisodeLengthB = window.dataB['environmentData']['episode'].length;
+                    drawVisualization(false, true);
+                    d3.select("#OverallStatsB").style("display","inline");
+                    window.mapwasChanged = false;
+                    d3.select('body').style("cursor","default");
+                });
+            }
+            else if (episodekeyA != "" && episodekeyB != "")
+            {
+                window.selectedEpisodeKeyA = episodekeyA;
+                window.selectedEpisodeKeyB = episodekeyB;
+                filename = "./static/data/"+dataFolder+episodekeyA+".json"
+            
+                d3.json(filename, function(jsonData){
+                    window.dataA = jsonData;
+                    window.grid =  window.dataA["environmentData"]["grid"];
+                    window.selectedEpisodeLengthA = window.dataA['environmentData']['episode'].length;
+                    filename2 = "./static/data/"+dataFolder+episodekeyB+".json"
+            
+                    d3.json(filename2, function(jsonData2){
+                        window.dataB = jsonData2;
+                        window.comparison = true;
+                        window.singleSelectedData = null;
+                        window.selectedEpisodeLengthB = window.dataB['environmentData']['episode'].length;
+                        drawComparisonVisualization(true, true);
+                        d3.select("#OverallStatsA").style("display","inline");
+                        d3.select("#OverallStatsB").style("display","inline");
+                        window.mapwasChanged = false;
+                        d3.select('body').style("cursor","default");
+                    });
+                });
+            }
+            // window.selectedEpisodeKey = episodekey;
             // if(window.item4Width != undefined)
             // {
             //     d3.select("#item4").attr("width", window.item4Width);
             // }
-            if(window.isDataLoadedByUser == false)
-            {
-                filename = "./static/data/levelsData/"+episodekey+".json"
+            // if(window.isDataLoadedByUser == false)
+            // {
+                // filename = "./static/data/winnersData/"+episodekey+".json"
             
-                d3.json(filename, function(jsonData){
-                    window.data = jsonData;
-                    window.selectedEpisodeLength = window.data['environmentData']['episode'].length;
-                    drawVisualization();
-                    d3.select('body').style("cursor","default");
-                });
-            }
-            else
-            {
-                window.data = window.jsonLogData[window.selectedEpisodeKey];
-                window.selectedEpisodeLength = window.data['environmentData']['episode'].length;
-                drawVisualization();
-                d3.select('body').style("cursor","default");
+                // d3.json(filename, function(jsonData){
+                //     window.data = jsonData;
+                //     window.selectedEpisodeLength = window.data['environmentData']['episode'].length;
+                //     drawVisualization();
+                //     d3.select('body').style("cursor","default");
+                // });
+            // }
+            // else
+            // {
+                // window.data = window.jsonLogData[window.selectedEpisodeKey];
+                // window.selectedEpisodeLength = window.data['environmentData']['episode'].length;
+                // drawVisualization();
+                // d3.select('body').style("cursor","default");
 
-            }
+            // }
+
             
         }
 
+        function options()
+        {
+            var dataset = document.getElementById("iterationSelector").value;
+            
+
+        }
         
+        function prepareForTeaser()
+        {
+            d3.select("body").style("font-size", "16px");
+            d3.selectAll(".viewTitle").style("font-size", "16px");
+            d3.selectAll(".TrainLabels").style("font-size", "18px");
+            d3.selectAll(".stationLabel").style("font-size", "18px");
+            
+
+        }
         
         // preparePlayback();
     </script>

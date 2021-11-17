@@ -1,1 +1,1 @@
-window.testLevels = ['RL-Test_12_Level_1', 'RL-Test_11_Level_0', 'RL-Test_13_Level_1', 'RL-Test_17_Level_0', 'OR-Test_13_Level_1', 'OR-Test_11_Level_0', 'OR-Test_12_Level_1', 'OR-Test_17_Level_0'];
+window.testLevelsFirst = ['RL-Test_12_Level_1', 'RL-Test_11_Level_0', 'RL-Test_13_Level_1', 'RL-Test_17_Level_0', 'OR-Test_13_Level_1', 'OR-Test_11_Level_0', 'OR-Test_12_Level_1', 'OR-Test_17_Level_0'];
