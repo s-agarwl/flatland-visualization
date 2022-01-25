@@ -291,10 +291,15 @@ function renderFirstFrame(
       (agents[i]["initial_position"][0] * window.svgWidthHeight) / numRows +
       window.svgWidthHeight / (2 * numRows);
 
+    window.circleRaidusInMap = window.svgWidthHeight / (2 * numRows) + 1;
+    // window.circleRaidusInMap = window.svgWidthHeight / (2 * numRows) - 0.5;
+    // window.directionCircleRadius = 0.5;
+    window.directionCircleRadius = 1;
+
     imageGroup.append("circle").attrs({
       cx: xPos,
       cy: yPos,
-      r: window.svgWidthHeight / (2 * numRows) + 1,
+      r: window.circleRaidusInMap,
       fill: "black",
       "fill-opacity": 1.0,
       stroke: "black",
@@ -304,6 +309,19 @@ function renderFirstFrame(
       "class": "agentCircles",
     //   "pointer-events": "bounding-box"
     });
+    imageGroup.append("circle").attrs({
+        cx: xPos,
+        cy: yPos - window.circleRaidusInMap + window.directionCircleRadius - 0.5,
+        r: window.directionCircleRadius,
+        fill: "white",
+        "fill-opacity": 1.0,
+        stroke: "none",
+        "stroke-width": "1px",
+        id: "AgentDirection" + agents[i]["agent_index"],
+        "trainid1": agents[i]["agent_index"],
+        "class": "agentDirections",
+      //   "pointer-events": "bounding-box"
+      });
 
     
 
@@ -314,6 +332,8 @@ function renderFirstFrame(
         y: yPos,
         class: "agentIdText",
         "font-size": (window.svgWidthHeight / numRows) * 0.7 + "px",
+        // "font-size": "3px",
+        // "font-size": "6px",
         id: "AgentText" + agents[i]["agent_index"],
         "fill":"white"
         // "dominant-baseline": "text-before-edge"
@@ -512,7 +532,9 @@ function posToSetElementString(pos) {
 }
 
 function computeOccupyingCellsByRegions(svgRoot, gameData) {
-  var rectArray = _param.selectionRectanglesArray;
+
+    initializeSelectedRegions2();
+  var rectArray = _param.selectedRectanglesRaw;
 
   var numColumns = _param.numColumns;
   var numRows = _param.numRows;
@@ -532,14 +554,21 @@ function computeOccupyingCellsByRegions(svgRoot, gameData) {
         {
             var index = region["index"];
             let setOfGridCells = new Set();
-            var x = +d3.select(rectArray[index]["_groups"][0][0]).attr("x");
-            var y = +d3.select(rectArray[index]["_groups"][0][0]).attr("y");
-            var selectionWidth = +d3
-            .select(rectArray[index]["_groups"][0][0])
-            .attr("width");
-            var selectionHeight = +d3
-            .select(rectArray[index]["_groups"][0][0])
-            .attr("height");
+            // var x = +d3.select(rectArray[index]["_groups"][0][0]).attr("x");
+            // var y = +d3.select(rectArray[index]["_groups"][0][0]).attr("y");
+
+            // var selectionWidth = +d3
+            // .select(rectArray[index]["_groups"][0][0])
+            // .attr("width");
+            // var selectionHeight = +d3
+            // .select(rectArray[index]["_groups"][0][0])
+            // .attr("height");
+
+            var x = rectArray[index].x;
+            var y = rectArray[index].y;
+            var selectionWidth = rectArray[index].width;
+            var selectionHeight = rectArray[index].height;
+
 
             if (selectionWidth < widthHeight) selectionWidth = widthHeight;
             if (selectionHeight < widthHeight) selectionHeight = widthHeight;
@@ -1508,6 +1537,7 @@ function renderNextFrame(stateArray, i, numRows, numColumns) {
 
       var playerCircle = d3.select("#AgentCircle" + k);
       var playerText = d3.select("#AgentText" + k);
+      var playerDirection = d3.select("#AgentDirection" + k);
       playerCircle
         .transition()
         .duration(durationOfFrame)
@@ -1518,6 +1548,27 @@ function renderNextFrame(stateArray, i, numRows, numColumns) {
         .duration(durationOfFrame)
         .attr("y", newYPosBoard)
         .attr("x", newXPosBoard);
+
+    if(!window.comparison)
+    {
+        if(k in window.data["agentTrajectoryData"])
+        {
+            if(i in window.data["agentTrajectoryData"][k])
+            {
+                var railNodeId = window.data["agentTrajectoryData"][k][i]["railNodeId"];
+                var tempSplit = railNodeId.split(", ")[2].replace(")","");
+                var direction = parseInt(tempSplit);
+
+                playerDirection
+                    .transition()
+                    .duration(durationOfFrame)
+                    .attr("cy", newYPosBoard - window.circleRaidusInMap + window.directionCircleRadius - 0.5)
+                    .attr("cx", newXPosBoard)
+                    .attr("transform", `rotate(${90*direction} ${newXPosBoard} ${newYPosBoard})`);
+                    }
+        }
+        
+    }
 
       // var split = d3.select("#Agent"+k).attr("transform").split(",");
       // var xPos = parseFloat(split[0].split("(")[1]);

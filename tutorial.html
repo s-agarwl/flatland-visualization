@@ -1,0 +1,348 @@
+<!DOCTYPE html> 
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Flatland Visualization</title>
+        <script  src="{{ url_for('static', filename='js/d3.v4.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/d3-selection-multi.v1.min.js') }}"></script>
+        <!-- <script src="js/svg-dropdown.js"></script> -->
+        <script src="{{ url_for('static', filename='js/visualizationScript.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/playback.js') }}"></script>
+
+        <script src="{{ url_for('static', filename='/data/data.js') }}"></script>
+        <script src="{{ url_for('static', filename='/js/svg-pan-zoom.min.js') }}"></script>
+        <!-- <script src="{{ url_for('static', filename='/js/svg-pan-zoom.js') }}"></script> -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='/css/all.min.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+        <script  src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+        <script  src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-ui.css') }}">
+      <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+      <!-- <script src="https://code.jquery.com/jquery-1.12.4.js"></script> -->
+      <script  src="{{ url_for('static', filename='js/jquery-ui.min.js') }}"></script>
+      <script  src="{{ url_for('static', filename='js/selection.js') }}"></script>
+        <style>
+
+        #videoSVG{
+            cursor:crosshair;
+        }
+        .yLegend
+        {
+            fill:black;
+            text-anchor: end;
+            dominant-baseline: middle;
+        }
+        .heading{
+            text-align:left;
+            
+        }
+        .footer{
+            text-align:center;
+            background: #f1eeee;
+            /* padding:0px; */
+            margin:0px;
+
+        }
+        .header{
+            text-align:center;
+            margin-top: 0px;
+            background: #f1eeee;
+            margin-bottom:5px;
+        }
+        .divcenter{
+            text-align:center;
+
+        }
+        .info{
+            font-size: 14px;
+
+        }
+        .boldText{
+            font-weight: bold;
+            /* font-size: 12pt; */
+        }
+        .largeText{
+            font-size:14pt;
+        }
+        .result{
+            font-size:14pt;
+
+        }
+        .highlighted{
+            stroke:  #ffdd08;
+            
+            /* stroke:  black; */
+            stroke-width:2px;
+            /* stroke-opacity:0.3; */
+            
+        }
+        .nothighlighted{
+            stroke: white;
+            stroke-width:0px;
+        }
+        .gameLengthBar{
+            /* fill:"#0074D9"; */
+            /* fill:#329fec; */
+            fill: #9e9ac8;
+            /* fill:black; */
+            fill-opacity:1;
+            stroke:grey;
+            stroke-width:1px;
+            /* stroke-opacity: 0.6; */
+        }
+        
+        .footer {
+            position: relative;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 35px;
+            padding-top: 10px;
+        }
+
+        .footer ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        .icon-flipped {
+            transform: scaleX(-1);
+        }
+        .firstLine{
+            font-size:12pt;
+        }
+        .secondLine{
+            font-size:10pt;
+        }
+        .abbr{
+            font-variant: small-caps;
+        }
+        .linkInTitle
+        {
+            color:black;
+            text-decoration: underline;
+        }
+
+        #playbackDiv.fullscreen{
+            z-index: 9999; 
+            width: 100%; 
+            height: 100%; 
+            position: fixed; 
+            padding-top:80px;
+            top:0;
+            left: 0; 
+        }
+        .sliderFullScreen{
+            width: 500px;
+            margin: auto;
+        }
+        .bodyFullScreen
+        {
+            opacity: 0.3;
+        }
+    
+        .agentIdText {
+            dominant-baseline: central;
+            text-anchor: middle;
+        }
+        .overallStatistics{
+            font-weight: bold;
+        }
+        .statsItem{
+            padding-left:20px;
+        }
+        .frameStatistics{
+            font-weight: bold;
+        }
+        .solidBorder{
+            border: 1px solid black;
+        }
+        .viewTitle {
+            display: inline;
+            background-color: grey;
+            color: white;
+            padding: 2px 20px 3px 20px;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            font-weight: bold;
+        }
+        </style>
+
+
+  
+  <style>
+       .btn-default{
+            background-color: #d6d0d0;
+        }
+        .glyphicon-resize-small, .glyphicon-resize-full{
+            background-color: #d6d0d0;
+            padding: 3px;
+        }
+        .ui-widget-content
+        {
+            background: #d6d0d0;
+        }
+       
+        .ui-widget-header {
+            background: #5b92e4;
+        }
+        .btn-sm{
+            padding:0px 6px 0px 6px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: auto auto (30%);
+            grid-template-rows: 30px 20px auto auto 30px;
+            grid-gap: 5px;
+            height: 100vh - 30px;
+            width: 100%;
+            }
+
+        .item0{
+                grid-column-start: 1;
+            grid-column-end: 4;
+
+        }
+        .item1{
+            margin-left: 10px;
+        }
+            .item2{
+                grid-column-start: 2;
+            grid-column-end: 4;
+            }
+
+            .item4 {
+            grid-column-start: 1;
+            grid-column-end: 3;
+            grid-row-start: 3;
+            grid-row-end: 5;
+            width: 900px;
+            margin-left:10px;
+            }
+
+            .item5{
+                grid-row-start: 3;
+            grid-row-end: 5;
+            margin-right: 15px;
+            }
+            .item6{
+                grid-column-start: 1;
+            grid-column-end: 4;
+
+            }
+
+
+/* transition graph */
+.links line {
+  stroke: #999;
+  stroke-opacity: 0.6;
+}
+
+.nodes circle {
+  /* stroke: #fff; */
+  stroke-width: 1px;
+  cursor:pointer;
+}
+.stationLabel:hover{
+    font-weight: bold;
+}
+.histogramHoverBars:hover{
+    fill:"grey";
+    fill-opacity: 0.2;
+}
+#slider{
+    margin-left: 10px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+label{
+    font-weight:normal;
+}
+.btn-info{
+    font-size:14px;
+    background-color: white;
+    border-color:black;
+    cursor:pointer;
+    width: 40px;
+    height:40px;
+    padding: 0px;
+    padding-top: 5px;
+}
+.btn-info:hover .btn-info:focus .btn-info:active{
+    border-color:black;
+}
+
+  </style>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+
+    </head>
+    <body id="page" style="text-align: center;">
+            <div class="header">
+                    <!-- <span style="font-size:14pt;">Supplementary Material for</span><br /><br /> -->
+                   
+                    <div class="container-fluid">
+                            <div class="row">
+                                    <div class="col-sm-2"  style="margin-top:10pt">
+                                        <!-- <b><a href="https://docs.google.com/forms/d/e/1FAIpQLSdK0PsotG1EUevLEQmakiyb_72PIX19bOHbWykLGLCidwyPog/viewform" target="_blank"  class="secondLine"><span class="glyphicon glyphicon-list-alt"></span> Feedback Form</a></b> -->
+                                            
+                                    </div>
+                                
+                                <div class="col-sm-8" >
+                                    <!-- <span class="firstLine">Adventures in <a href="https://flatland.aicrowd.com/intro.html" class="linkInTitle" target="_blank">Flatland</a> : Visual Analysis of Multi-Agent Movement in Virtual Rail Networks</span><br/>
+                                    <span class="secondLine">(Please fill <b><a href="https://docs.google.com/forms/d/e/1FAIpQLSfandmyOnIcyClKPgSHHTzZGdhNWrKkBd0uQ95JijeF8P-9pw/viewform" target="_blank" >the feedback form</a></b> to help us in research and suggest further improvements.)</span> -->
+                                    <span class="firstLine">Spatio-temporal Analysis of Multi-agent Scheduling Behaviors on Fixed-track Networks</span><br/>
+
+
+                                </div>
+                            </div>
+                        </div>
+                </div>
+        <br/>
+        <br/>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-2">
+                </div>
+                <div class="col-sm-8" >
+                    <p>
+                    <b>Here is a video explaining the features and available interactions in the tool:</b>
+                    <br/>
+                    <br/>
+                    <video width="60%" controls>
+                        <source src="./static/video/intro_video.mp4" type="video/mp4">
+                        <!-- <source src="movie.ogg" type="video/ogg"> -->
+                      Your browser does not support the video tag.
+                      </video>
+
+                    <!-- <img src="./static/images/screenshot.PNG" width="100%">  -->
+                    </p>
+
+                    <br/>
+                    <br/>
+                    
+                </div>
+                <div class="col-sm-2">
+                </div>
+            </div>
+        </div>
+
+        <script>
+            window.onload = function() 
+       {
+
+
+           var screenWidth = document.body.clientWidth;
+           window.zoomFactor = screenWidth/1940;
+           d3.select("#page").style("zoom", window.zoomFactor);
+       }
+       </script>
+
+    </body>
+</html>
+        

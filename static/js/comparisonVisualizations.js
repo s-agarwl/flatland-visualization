@@ -2182,13 +2182,15 @@ function drawRightColumnBoth(svg, topLegendGroup) {
     //   window.diffColorScale = d3.scaleLinear().domain([-maxDifference, 0, maxDifference]).range([_param.colorA, "grey", _param.colorB]);
     //   window.diffColorScale = d3.scaleLinear().domain([-maxDifference,  maxDifference]).range([_param.colorA, _param.colorB]);
     window.diffColorScale = d3.scaleSequential(d3.interpolateRgb(_param.colorA, _param.colorB)).domain([-maxDiffTouse,maxDiffTouse]);
+    // window.diffColorScale = d3.scaleSequential(d3.interpolateRgb("#292CFF", "#FF6A00")).domain([-maxDiffTouse,maxDiffTouse]);
 
     // }
     // colorScaleA = d3.scaleLinear().domain([-maxDifference, ]).range([_param.colorA, "#ebf2f7"]);
     // colorScaleB = d3.scaleLinear().domain().range([_param.colorB, "#fff2e5"]);
     // console.log(d3.interpolateRgb("red", "blue")(0.5));
 
-    window.opacityScale = d3.scaleLinear().domain([0,  maxDiffTouse]).range([0.5, 0.5]);
+    window.opacityScale = d3.scaleLinear().domain([0,  maxDiffTouse]).range([0.7, 0.7]);
+    var tempopacityScale = d3.scaleLinear().domain([0,  maxDiffTouse]).range([0.3, 0.7]);
 
     var numColumns = heatmapGridA.length;
     var numRows = heatmapGridA[0].length;
@@ -2217,7 +2219,8 @@ function drawRightColumnBoth(svg, topLegendGroup) {
             },
             "fill-opacity": function () {
             //   return 0.5
-            return window.opacityScale(Math.abs(gridTouse[i][j]));
+            // return window.opacityScale(Math.abs(gridTouse[i][j]));
+            return tempopacityScale(Math.abs(gridTouse[i][j]));
             },
           })
           .on("mouseover", function () {
@@ -2279,7 +2282,8 @@ function drawRightColumnBoth(svg, topLegendGroup) {
         .attr("width", width )
         .attr("height", barHeight)
         .style("fill", "url(#linear-gradient)")
-        .style("fill-opacity", 0.5);
+        // .style("fill-opacity", 0.5);
+        .style("fill-opacity", 0.8);
         svg.append("text").attrs({
             x: 0,
             y: margin.top-2,

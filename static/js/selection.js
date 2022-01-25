@@ -4,6 +4,9 @@ function enableSelectioninplaybackSVG() {
     _param.selectionRectanglesArray = [];
     window.selectedRegions = [];
     window.selectedRegionIdCounter = 1;
+    _param.selectedRectanglesRaw = [];
+
+    initializeSelectedRegions1();
 
   var selectionRect = {
     element: null,
@@ -193,20 +196,36 @@ function enableSelectioninplaybackSVG() {
             computeGraphForEachTimestep();
         $("#aggregatedRadio").prop("checked", true);
         $("#aggregatedRadio").click();
+
+        // 
+        
+        var thisRect = d3.select("#Rect" + (window.selectedRegionIdCounter-1));
+        var rectRaw = {
+            "id": +thisRect.attr("plainId"),
+            "x": +thisRect.attr("x"),
+            "y": +thisRect.attr("y"),
+            "width": +thisRect.attr("width"),
+            "height": +thisRect.attr("height"),
+        };
+        _param.selectedRectanglesRaw.push(rectRaw);
+        // 
         if(!window.comparison)
             computeOccupyingCellsByRegions(d3.select("#transitionGraphSvg"), window.singleSelectedData);
         else
             computeOccupyingCellsByRegionsForBoth(d3.select("#transitionGraphSvg"), window.dataA, window.dataB);
 
-        var thisRect = d3.select("#Rect" + _param.selectionRectanglesArray.length);
         
         var height = +thisRect.attr("height");
         var rectEle = d3.select("#TextRect"+thisRect.attr("plainId"));
-        var oldYPos = +rectEle.attr("y");
+        var oldYPos = +rectEle.attr("y");     
+
+
         if(height > _param.numRows/window.svgWidthHeight)
             rectEle.attr("y", oldYPos-height/2);
 
         var regionId = +thisRect.attr("plainId");
+
+        
 
         if(!window.comparison)
         {

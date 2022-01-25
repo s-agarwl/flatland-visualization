@@ -79,7 +79,8 @@ _param = {
     linkMinWidth: 2,
     linkMaxWidth: 7,
   trainColorInDynamicGraph: "grey",
-  rowFactor: 5
+  rowFactor: 5,
+  selectedRailRegionIds : {}
 
 };
 
@@ -3378,3 +3379,5 @@ function playPause(id) {
   if (myVideo.paused) myVideo.play();
   else myVideo.pause();
 }
+
+
