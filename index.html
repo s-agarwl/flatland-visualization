@@ -3,30 +3,30 @@
     <head>
         <meta charset="utf-8">
         <title>Flatland Visualization</title>
-        <script  src="/static/js/d3.v4.min.js"></script>
-        <script src="/static/js/d3-selection-multi.v1.min.js"></script>
-        <!-- <script src="/static/js/svg-dropdown.js"></script> -->
-        <script src="/static/js/regionSelections.js"></script>
-        <script src="/static/js/visualizationScript.js"></script>
-        <script src="/static/js/comparisonVisualizations.js"></script>
+        <script  src="static/js/d3.v4.min.js"></script>
+        <script src="static/js/d3-selection-multi.v1.min.js"></script>
+        <!-- <script src="static/js/svg-dropdown.js"></script> -->
+        <script src="static/js/regionSelections.js"></script>
+        <script src="static/js/visualizationScript.js"></script>
+        <script src="static/js/comparisonVisualizations.js"></script>
         
-        <script src="/static/js/playback.js"></script>
+        <script src="static/js/playback.js"></script>
 
-        <script src="/static/data/data.js"></script>
+        <script src="static/data/data.js"></script>
         <!-- <script src="/data/winnersdata.js"></script> -->
         <script src="static/js/svg-pan-zoom.min.js"></script>
         <!-- <script src="/js/svg-pan-zoom.js"></script> -->
-        <link rel="stylesheet" href="/static/css/all.min.css">
-        <link rel="stylesheet" href="/static/css/bootstrap.min.css">
-        <script  src="/static/js/jquery.min.js"></script>
-        <script  src="/static/js/bootstrap.min.js"></script>
+        <link rel="stylesheet" href="static/css/all.min.css">
+        <link rel="stylesheet" href="static/css/bootstrap.min.css">
+        <script  src="static/js/jquery.min.js"></script>
+        <script  src="static/js/bootstrap.min.js"></script>
     
-        <link rel="stylesheet" href="/static/css/jquery-ui.css">
-      <link rel="stylesheet" href="/static/css/style.css">
+        <link rel="stylesheet" href="static/css/jquery-ui.css">
+      <link rel="stylesheet" href="static/css/style.css">
       <!-- <script src="https://code.jquery.com/jquery-1.12.4.js"></script> -->
-      <script  src="/static/js/jquery-ui.min.js"></script>
-      <script  src="/static/js/selection.js"></script>
-      <script  src="/static/js/node-pie.js"></script>
+      <script  src="static/js/jquery-ui.min.js"></script>
+      <script  src="static/js/selection.js"></script>
+      <script  src="static/js/node-pie.js"></script>
         <style>
 
         #videoSVG{
@@ -560,7 +560,7 @@ label{
                           <a href="#" class="btn btn-info btn-lg" id="railRegionSelectionButton"  style="margin-top:100px; position:absolute;  background-color: white;"
                           title = "Select Rail Line as a Region">
                             <svg  width="30px" height="30px" >
-                                <image xlink:href="./static/resources/png/Gleis_horizontal.png" width="40px" height="30px" x="-5px" y="0" ></image>
+                                <image xlink:href="static/resources/png/Gleis_horizontal.png" width="40px" height="30px" x="-5px" y="0" ></image>
                             </svg>
                             </a>
                           <a href="#" id="cancelSelectionButton" class="btn btn-info btn-lg" style="margin-top:150px; position:absolute;color:red; font-size:30px; font-weight:normal; background-color: white;"
@@ -568,7 +568,7 @@ label{
                           <span class="glyphicon "  >&#xe014;</span>
                         </a>
                           <!-- <svg id="cancelSelectionButton"  width="30px" height="30px" style="margin-top:100px; position:absolute;">
-                            <image xlink:href="./static/resources/png/Gleis_horizontal.png" width="30px" height="30px" x="0" y="0" ></image>
+                            <image xlink:href="static/resources/png/Gleis_horizontal.png" width="30px" height="30px" x="0" y="0" ></image>
                           </svg> -->
 
                         <div id="video" ></div>
@@ -1363,7 +1363,7 @@ window.addEventListener( "load", function () {
             folder = ""
             if(dataset == "first")
             {    
-                filename = "./static/data/environments_first.json";
+                filename = "static/data/environments_first.json";
                 window.selectedLevel = "13";
                 window.selectedMap = "1";
                 window.schedulingA="OR";
@@ -1372,7 +1372,7 @@ window.addEventListener( "load", function () {
             }
             else if(dataset=="second")
             {
-                filename = "./static/data/winnersData/environments.json";
+                filename = "static/data/winnersData/environments.json";
                 window.selectedLevel = "11";
                 window.selectedMap = "1";
                 // window.selectedLevel = "20";
@@ -1386,7 +1386,7 @@ window.addEventListener( "load", function () {
 
             else if(dataset=="third")
             {
-                filename = "./static/data/customData/environments.json";
+                filename = "static/data/customData/environments.json";
 
                 window.selectedLevel = "-1";
                 window.selectedMap = "-1";
@@ -1560,7 +1560,7 @@ window.addEventListener( "load", function () {
         function drawStatisticsChart(folder)
         {
             
-            d3.json("./static/data/"+folder+"/summaryStatistics.json", function(data)
+            d3.json("static/data/"+folder+"/summaryStatistics.json", function(data)
             {
                 insideDrawStatistics(data);
             });
@@ -2000,7 +2000,7 @@ window.addEventListener( "load", function () {
                 window.selectedEpisodeKeyA = episodekeyA;
                 window.selectedEpisodeKeyB = "";
                 window.comparison = false;
-                filename = "./static/data/"+dataFolder+episodekeyA+".json"
+                filename = "static/data/"+dataFolder+episodekeyA+".json"
                 
                 var urldata = "";
                 if(window.boolUploadedLocalFiles)
@@ -2033,7 +2033,7 @@ window.addEventListener( "load", function () {
                 window.selectedEpisodeKeyB = episodekeyB;
                 window.selectedEpisodeKeyA = "";
                 window.comparison = false;
-                filename = "./static/data/"+dataFolder+episodekeyB+".json"
+                filename = "static/data/"+dataFolder+episodekeyB+".json"
             
                 d3.json(filename, function(jsonData){
                     window.dataB = jsonData;
@@ -2051,13 +2051,13 @@ window.addEventListener( "load", function () {
             {
                 window.selectedEpisodeKeyA = episodekeyA;
                 window.selectedEpisodeKeyB = episodekeyB;
-                filename = "./static/data/"+dataFolder+episodekeyA+".json"
+                filename = "static/data/"+dataFolder+episodekeyA+".json"
             
                 d3.json(filename, function(jsonData){
                     window.dataA = jsonData;
                     window.grid =  window.dataA["environmentData"]["grid"];
                     window.selectedEpisodeLengthA = window.dataA['environmentData']['episode'].length;
-                    filename2 = "./static/data/"+dataFolder+episodekeyB+".json"
+                    filename2 = "static/data/"+dataFolder+episodekeyB+".json"
             
                     d3.json(filename2, function(jsonData2){
                         window.dataB = jsonData2;
@@ -2079,7 +2079,7 @@ window.addEventListener( "load", function () {
             // }
             // if(window.isDataLoadedByUser == false)
             // {
-                // filename = "./static/data/winnersData/"+episodekey+".json"
+                // filename = "static/data/winnersData/"+episodekey+".json"
             
                 // d3.json(filename, function(jsonData){
                 //     window.data = jsonData;
