@@ -158,8 +158,10 @@ function enableSelectioninplaybackSVG() {
     let domPt = videoSVG.createSVGPoint();
     // let domPt =new DOMPoint();
 
-    domPt.x = p[0] * (1 / window.zoomFactor);
-    domPt.y = p[1] * (1 / window.zoomFactor);
+    // domPt.x = p[0] * (1 / window.zoomFactor);
+    // domPt.y = p[1] * (1 / window.zoomFactor);
+    domPt.x = p[0];
+    domPt.y = p[1];
     let svgPt = domPt.matrixTransform(videoSVG.getScreenCTM().inverse());
     var tViewport = document.querySelector("g.svg-pan-zoom_viewport");
     var tMatrix = tViewport.transform.baseVal.getItem(0).matrix;
