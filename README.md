@@ -1,8 +1,10 @@
 # Flatland Visualization
 
-This project aims to visualize episodes of flatland environment. 
+This project aims to visualize episodes of flatland environment and has been published at a conference. To cite:
 
-Note: If you want to just want to see the visualization without the ability to upload your log files, please visit: https://vis-tools.paluno.uni-due.de/fv/
+S. Agarwal, G. Wallner, J. Watson and F. Beck, "Spatio-temporal Analysis of Multi-agent Scheduling Behaviors on Fixed-track Networks," 2022 IEEE 15th Pacific Visualization Symposium (PacificVis), 2022, pp. 21-30, doi: 10.1109/PacificVis53943.2022.00011.
+
+Note: If you want to downnload the paper, see the video presentation, or see a demo of the visualization, please visit: https://s-agarwl.github.io/publication/Agarwal2022Spatio
 
 Data preparation:
 
